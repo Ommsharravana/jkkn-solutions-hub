@@ -25,6 +25,13 @@ export default function ForgotPasswordPage() {
       return
     }
 
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address')
+      return
+    }
+
     setIsSubmitting(true)
     const { error, message } = await resetPassword(email)
     setIsSubmitting(false)

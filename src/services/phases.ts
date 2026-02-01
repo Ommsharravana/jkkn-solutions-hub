@@ -8,6 +8,12 @@ import type {
   BuilderAssignment,
 } from '@/types/database'
 
+// Helper to escape special characters in search strings for PostgREST
+function escapeSearchString(str: string): string {
+  // Escape characters that have special meaning in PostgREST/PostgreSQL LIKE patterns
+  return str.replace(/[%_\\]/g, '\\$&')
+}
+
 // Extended phase type with related data
 export interface PhaseWithDetails extends SolutionPhase {
   solution?: {
@@ -112,7 +118,8 @@ export async function getPhases(filters?: PhaseFilters): Promise<PhaseWithDetail
   }
 
   if (filters?.search) {
-    query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
+    const escapedSearch = escapeSearchString(filters.search)
+    query = query.or(`title.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`)
   }
 
   const { data, error } = await query

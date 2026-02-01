@@ -58,17 +58,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize auth state
   useEffect(() => {
+    let isMounted = true
+
     const initializeAuth = async () => {
       try {
         const { data: { user: supabaseUser } } = await supabase.auth.getUser()
         const authUser = await transformUser(supabaseUser)
-        setUser(authUser)
+        if (isMounted) {
+          setUser(authUser)
+        }
       } catch (error) {
         console.error('Error initializing auth:', error)
-        setUser(null)
+        if (isMounted) {
+          setUser(null)
+        }
       } finally {
-        setLoading(false)
-        setInitialized(true)
+        if (isMounted) {
+          setLoading(false)
+          setInitialized(true)
+        }
       }
     }
 
@@ -76,9 +84,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return
+
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         const authUser = await transformUser(session?.user || null)
-        setUser(authUser)
+        if (isMounted) {
+          setUser(authUser)
+        }
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
       }
@@ -86,6 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     })
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
   }, [supabase, transformUser])
@@ -166,7 +179,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = useCallback(async () => {
     try {
       setLoading(true)
-      await supabase.auth.signOut()
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Sign out error:', error)
+        // Still clear local state even if server signout fails
+        // This ensures the user can attempt to sign in again
+      }
+      setUser(null)
+    } catch (error) {
+      console.error('Sign out exception:', error)
+      // Clear local state on any error to allow re-authentication
       setUser(null)
     } finally {
       setLoading(false)

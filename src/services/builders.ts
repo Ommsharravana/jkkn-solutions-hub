@@ -7,6 +7,12 @@ import type {
   BuilderRole,
 } from '@/types/database'
 
+// Helper to escape special characters in search strings for PostgREST
+function escapeSearchString(str: string): string {
+  // Escape characters that have special meaning in PostgREST/PostgreSQL LIKE patterns
+  return str.replace(/[%_\\]/g, '\\$&')
+}
+
 // Extended builder type with skills and assignments
 export interface BuilderWithDetails extends Builder {
   skills?: BuilderSkill[]
@@ -86,7 +92,8 @@ export async function getBuilders(filters?: BuilderFilters): Promise<BuilderWith
   }
 
   if (filters?.search) {
-    query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`)
+    const escapedSearch = escapeSearchString(filters.search)
+    query = query.or(`name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%`)
   }
 
   const { data, error } = await query
@@ -512,7 +519,10 @@ export async function getAvailableBuildersForPhase(phaseId: string): Promise<Bui
     .order('name', { ascending: true })
 
   if (assignedBuilderIds.length > 0) {
-    query = query.not('id', 'in', `(${assignedBuilderIds.join(',')})`)
+    // Filter out assigned builders using proper PostgREST filter syntax
+    for (const id of assignedBuilderIds) {
+      query = query.neq('id', id)
+    }
   }
 
   const { data, error } = await query

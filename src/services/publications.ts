@@ -8,6 +8,12 @@ import type {
   Solution,
 } from '@/types/database'
 
+// Helper to escape special characters in search strings for PostgREST
+function escapeSearchString(str: string): string {
+  // Escape characters that have special meaning in PostgREST/PostgreSQL LIKE patterns
+  return str.replace(/[%_\\]/g, '\\$&')
+}
+
 // Extended publication type with solution info
 export interface PublicationWithSolution extends Publication {
   solution?: Solution
@@ -99,7 +105,8 @@ export async function getPublications(filters?: PublicationFilters): Promise<Pub
   }
 
   if (filters?.search) {
-    query = query.or(`title.ilike.%${filters.search}%,journal_name.ilike.%${filters.search}%`)
+    const escapedSearch = escapeSearchString(filters.search)
+    query = query.or(`title.ilike.%${escapedSearch}%,journal_name.ilike.%${escapedSearch}%`)
   }
 
   const { data, error } = await query

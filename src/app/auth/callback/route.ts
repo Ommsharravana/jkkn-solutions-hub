@@ -1,12 +1,30 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+// Allowed origins for redirect (prevents open redirect attacks)
+const ALLOWED_ORIGINS = [
+  process.env.NEXT_PUBLIC_APP_URL,
+  'http://localhost:3000',
+  'http://localhost:3001',
+].filter(Boolean)
+
+function getSafeOrigin(requestUrl: URL): string {
+  const origin = requestUrl.origin
+  // In production, use the configured app URL; in dev, allow localhost
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    return origin
+  }
+  // Fallback to configured app URL or localhost
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
-  const origin = requestUrl.origin
+  const type = requestUrl.searchParams.get('type') // 'recovery', 'signup', 'invite', etc.
+  const origin = getSafeOrigin(requestUrl)
 
   // Handle OAuth error
   if (error) {
@@ -64,7 +82,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Redirect to dashboard
+    // Redirect based on auth type
+    if (type === 'recovery') {
+      // Password reset flow - redirect to reset password page
+      return NextResponse.redirect(`${origin}/auth/reset-password`)
+    }
+
+    // Default: redirect to dashboard
     return NextResponse.redirect(`${origin}/`)
   }
 

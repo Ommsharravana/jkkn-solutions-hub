@@ -1,6 +1,12 @@
 import { createClient as createSupabaseClient } from '@/lib/supabase/client'
 import type { Client, PartnerStatus, SourceType } from '@/types/database'
 
+// Helper to escape special characters in search strings for PostgREST
+function escapeSearchString(str: string): string {
+  // Escape characters that have special meaning in PostgREST/PostgreSQL LIKE patterns
+  return str.replace(/[%_\\]/g, '\\$&')
+}
+
 // Filter options for client queries
 export interface ClientFilters {
   partner_status?: PartnerStatus
@@ -58,8 +64,9 @@ export async function getClients(filters?: ClientFilters): Promise<Client[]> {
 
   if (filters?.search) {
     // Search across name, company name, contact person, and contact email
+    const escapedSearch = escapeSearchString(filters.search)
     query = query.or(
-      `name.ilike.%${filters.search}%,contact_person.ilike.%${filters.search}%,contact_email.ilike.%${filters.search}%,contact_phone.ilike.%${filters.search}%`
+      `name.ilike.%${escapedSearch}%,contact_person.ilike.%${escapedSearch}%,contact_email.ilike.%${escapedSearch}%,contact_phone.ilike.%${escapedSearch}%`
     )
   }
 
@@ -80,7 +87,10 @@ export async function getClientById(id: string): Promise<Client | null> {
     .eq('id', id)
     .single()
 
-  if (error) throw error
+  if (error) {
+    if (error.code === 'PGRST116') return null // Not found
+    throw error
+  }
   return data
 }
 

@@ -137,8 +137,10 @@ export async function POST(request: NextRequest) {
       )
 
     case 'error':
+      // Don't expose internal error details to clients
+      console.error('[Intent Webhook] Processing error:', result.error)
       return NextResponse.json(
-        { error: result.error },
+        { error: 'Internal processing error' },
         { status: 500 }
       )
 
@@ -153,13 +155,10 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/webhooks/intent
  * Health check endpoint for the webhook
+ * Note: Returns minimal info to avoid exposing internal architecture
  */
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
-    endpoint: '/api/webhooks/intent',
-    method: 'POST',
-    description: 'Intent Platform webhook receiver',
-    required_header: 'X-Webhook-Secret',
   })
 }

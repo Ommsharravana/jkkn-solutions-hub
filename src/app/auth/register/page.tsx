@@ -28,6 +28,13 @@ export default function RegisterPage() {
       return
     }
 
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address')
+      return
+    }
+
     if (password !== confirmPassword) {
       toast.error('Passwords do not match')
       return
@@ -35,6 +42,16 @@ export default function RegisterPage() {
 
     if (password.length < 8) {
       toast.error('Password must be at least 8 characters')
+      return
+    }
+
+    // Check password complexity
+    const hasUppercase = /[A-Z]/.test(password)
+    const hasLowercase = /[a-z]/.test(password)
+    const hasNumber = /[0-9]/.test(password)
+
+    if (!hasUppercase || !hasLowercase || !hasNumber) {
+      toast.error('Password must contain uppercase, lowercase, and a number')
       return
     }
 
@@ -100,6 +117,7 @@ export default function RegisterPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 disabled={loading || isSubmitting}
+                autoComplete="name"
               />
             </div>
 
@@ -112,6 +130,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading || isSubmitting}
+                autoComplete="email"
               />
             </div>
 
@@ -124,6 +143,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading || isSubmitting}
+                autoComplete="new-password"
               />
             </div>
 
@@ -136,6 +156,7 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={loading || isSubmitting}
+                autoComplete="new-password"
               />
             </div>
 

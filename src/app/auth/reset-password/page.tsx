@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const { updatePassword, loading, user } = useAuth()
+  const { updatePassword, loading, user, initialized } = useAuth()
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -22,16 +22,12 @@ export default function ResetPasswordPage() {
 
   // Check if user is authenticated (they should be after clicking the reset link)
   useEffect(() => {
-    // Give auth state time to initialize
-    const timeout = setTimeout(() => {
-      if (!user && !loading) {
-        toast.error('Invalid or expired reset link')
-        router.push('/auth/forgot-password')
-      }
-    }, 2000)
-
-    return () => clearTimeout(timeout)
-  }, [user, loading, router])
+    // Only check after auth is fully initialized
+    if (initialized && !user) {
+      toast.error('Invalid or expired reset link')
+      router.push('/auth/forgot-password')
+    }
+  }, [user, initialized, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,6 +47,16 @@ export default function ResetPasswordPage() {
       return
     }
 
+    // Check password complexity
+    const hasUppercase = /[A-Z]/.test(password)
+    const hasLowercase = /[a-z]/.test(password)
+    const hasNumber = /[0-9]/.test(password)
+
+    if (!hasUppercase || !hasLowercase || !hasNumber) {
+      toast.error('Password must contain uppercase, lowercase, and a number')
+      return
+    }
+
     setIsSubmitting(true)
     const { error } = await updatePassword(password)
     setIsSubmitting(false)
@@ -60,6 +66,19 @@ export default function ResetPasswordPage() {
     } else {
       setIsSuccess(true)
     }
+  }
+
+  // Show loading state while auth initializes
+  if (!initialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/40 p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (isSuccess) {

@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/client'
 import type { CohortMember, CohortTrack, CohortAssignment, Department } from '@/types/database'
 
+// Helper to escape special characters in search strings for PostgREST
+function escapeSearchString(str: string): string {
+  // Escape characters that have special meaning in PostgREST/PostgreSQL LIKE patterns
+  return str.replace(/[%_\\]/g, '\\$&')
+}
+
 // Extended cohort member with department and assignments
 export interface CohortMemberWithDetails extends CohortMember {
   department?: Department
@@ -73,7 +79,8 @@ export async function getCohortMembers(
   }
 
   if (filters?.search) {
-    query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`)
+    const escapedSearch = escapeSearchString(filters.search)
+    query = query.or(`name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%`)
   }
 
   const { data, error } = await query

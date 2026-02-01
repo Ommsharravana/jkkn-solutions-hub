@@ -36,6 +36,13 @@ export default function LoginPage() {
       return
     }
 
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address')
+      return
+    }
+
     setIsSubmitting(true)
     const { error } = await signInWithEmail(email, password)
     setIsSubmitting(false)
@@ -103,6 +110,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading || isSubmitting}
+                autoComplete="email"
               />
             </div>
 
@@ -123,6 +131,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading || isSubmitting}
+                autoComplete="current-password"
               />
             </div>
 

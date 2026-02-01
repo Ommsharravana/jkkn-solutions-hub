@@ -10,7 +10,7 @@ import type {
   Client,
   EarningsLedger,
 } from '@/types/database'
-import { calculateRevenueSplits, getSplitType, type SplitType } from './revenue-splits'
+import { calculateRevenueSplits, type SplitType } from './revenue-splits'
 
 // Extended payment type with relations
 export interface PaymentWithDetails extends Payment {
@@ -313,6 +313,12 @@ export async function deletePayment(id: string): Promise<void> {
   if (error) throw error
 }
 
+// Helper to safely extract nested data from Supabase joins (handles both object and array results)
+function extractNestedData<T>(data: T | T[] | null | undefined): T | undefined {
+  if (data === null || data === undefined) return undefined
+  return Array.isArray(data) ? data[0] : data
+}
+
 // Calculate and create earnings entries for a payment
 async function calculateAndCreateEarnings(
   paymentId: string,
@@ -343,22 +349,25 @@ async function calculateAndCreateEarnings(
       .single()
 
     if (payment?.phase) {
-      // phase comes back as array from join, get first element
-      const phaseData = Array.isArray(payment.phase) ? payment.phase[0] : payment.phase
+      // Safely extract nested data from Supabase joins
+      const phaseData = extractNestedData(payment.phase as { phase_number: number; solution?: unknown } | { phase_number: number; solution?: unknown }[] | null)
       isFirstPhase = phaseData?.phase_number === 1
 
-      // solution and client are also arrays from nested joins
-      const solutionData = Array.isArray(phaseData?.solution) ? phaseData.solution[0] : phaseData?.solution
-      const clientData = Array.isArray(solutionData?.client) ? solutionData.client[0] : solutionData?.client
+      if (phaseData?.solution) {
+        const solutionData = extractNestedData(phaseData.solution as { client?: unknown } | { client?: unknown }[] | null)
+        if (solutionData?.client) {
+          const clientData = extractNestedData(solutionData.client as { id: string } | { id: string }[] | null)
 
-      if (isFirstPhase && clientData?.id) {
-        const { data: referral } = await supabase
-          .from('client_referrals')
-          .select('id')
-          .eq('client_id', clientData.id)
-          .single()
+          if (isFirstPhase && clientData?.id) {
+            const { data: referral } = await supabase
+              .from('client_referrals')
+              .select('id')
+              .eq('client_id', clientData.id)
+              .single()
 
-        hasReferral = !!referral
+            hasReferral = !!referral
+          }
+        }
       }
     }
   }

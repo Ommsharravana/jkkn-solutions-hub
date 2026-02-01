@@ -8,6 +8,12 @@ import type {
   ContentDeliverable,
 } from '@/types/database'
 
+// Helper to escape special characters in search strings for PostgREST
+function escapeSearchString(str: string): string {
+  // Escape characters that have special meaning in PostgREST/PostgreSQL LIKE patterns
+  return str.replace(/[%_\\]/g, '\\$&')
+}
+
 // Extended production learner with assignments
 export interface ProductionLearnerWithAssignments extends ProductionLearner {
   assignments?: (ProductionAssignment & {
@@ -86,8 +92,9 @@ export async function getProductionLearners(
   }
 
   if (filters?.search) {
+    const escapedSearch = escapeSearchString(filters.search)
     query = query.or(
-      `name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
+      `name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%`
     )
   }
 

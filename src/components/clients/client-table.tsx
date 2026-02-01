@@ -249,7 +249,7 @@ export function ClientTable({
 
         {/* Clear Filters */}
         {hasActiveFilters && (
-          <Button variant="ghost" onClick={clearFilters} size="icon">
+          <Button variant="ghost" onClick={clearFilters} size="icon" aria-label="Clear all filters">
             <X className="h-4 w-4" />
           </Button>
         )}

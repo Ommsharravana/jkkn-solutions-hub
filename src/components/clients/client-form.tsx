@@ -161,7 +161,7 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Industry *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select industry" />
@@ -188,7 +188,7 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Company Size</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select size" />
@@ -299,7 +299,7 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
                   <FormLabel>Source</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value || undefined}
+                    value={field.value || undefined}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -340,7 +340,7 @@ export function ClientForm({ client, onSubmit, isLoading }: ClientFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Partner Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select partner status" />

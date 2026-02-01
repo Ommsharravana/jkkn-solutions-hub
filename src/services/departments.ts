@@ -27,6 +27,9 @@ export async function getDepartmentById(id: string): Promise<Department | null> 
     .eq('id', id)
     .single()
 
-  if (error) throw error
+  if (error) {
+    if (error.code === 'PGRST116') return null // Not found
+    throw error
+  }
   return data
 }
