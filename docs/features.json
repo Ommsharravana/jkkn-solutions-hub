@@ -1,0 +1,480 @@
+{
+  "project": "JKKN Solutions Hub",
+  "version": "1.1",
+  "updated": "2026-02-01",
+  "features": [
+    {
+      "id": "F001",
+      "name": "Authentication - Internal (MyJKKN OAuth)",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Internal users authenticate via MyJKKN OAuth (Google Sign-in)",
+      "test_steps": [
+        "1. Go to solutions.jkkn.ai",
+        "2. Click 'Sign in with JKKN'",
+        "3. Redirects to MyJKKN OAuth",
+        "4. Sign in with Google account",
+        "5. Redirects back to Solutions Hub",
+        "6. User sees dashboard based on role",
+        "7. Session persists on refresh"
+      ]
+    },
+    {
+      "id": "F002",
+      "name": "Authentication - External (Username/Password)",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "External clients/contractors authenticate with username/password",
+      "test_steps": [
+        "1. Go to solutions.jkkn.ai",
+        "2. Click 'Client Login'",
+        "3. Enter username and password",
+        "4. Successfully logs in",
+        "5. User sees client dashboard",
+        "6. Test password reset flow",
+        "7. Test account creation by admin"
+      ]
+    },
+    {
+      "id": "F003",
+      "name": "Client Management",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Create, view, update clients with partner status",
+      "test_steps": [
+        "1. Create new client with all fields",
+        "2. Set partner_status = 'yi'",
+        "3. Verify partner_discount = 0.50 auto-applied",
+        "4. Create solution for this client",
+        "5. Verify final_price = base_price * 0.50",
+        "6. Test all partner statuses: yi, alumni, mou, referral, standard",
+        "7. Test referral_count increment on referral"
+      ]
+    },
+    {
+      "id": "F004",
+      "name": "Solution Creation (Software)",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Create software solution with phases",
+      "test_steps": [
+        "1. Select client",
+        "2. Choose solution_type = 'software'",
+        "3. Fill title, problem_statement, base_price",
+        "4. System auto-generates solution_code",
+        "5. Add Phase 1 with details",
+        "6. Set phase owner_department_id",
+        "7. Verify phase status = 'prospecting'"
+      ]
+    },
+    {
+      "id": "F005",
+      "name": "Solution Creation (Training)",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Create training solution with program details",
+      "test_steps": [
+        "1. Select client",
+        "2. Choose solution_type = 'training'",
+        "3. Fill program_type and track (A or B)",
+        "4. Set participant_count, location",
+        "5. Create training sessions",
+        "6. Verify revenue split model applied based on track"
+      ]
+    },
+    {
+      "id": "F006",
+      "name": "Solution Creation (Content)",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Create content solution with order details",
+      "test_steps": [
+        "1. Select client",
+        "2. Choose solution_type = 'content'",
+        "3. Fill order_type, quantity, division",
+        "4. Set due_date and revision_rounds",
+        "5. Add deliverables",
+        "6. Verify 60-20-20 split model applied"
+      ]
+    },
+    {
+      "id": "F007",
+      "name": "Builder Assignment Workflow",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Builders request/claim phases, HOD approves",
+      "test_steps": [
+        "1. Builder views available phases",
+        "2. Builder requests assignment to phase",
+        "3. Assignment status = 'requested'",
+        "4. HOD sees pending requests",
+        "5. HOD approves assignment",
+        "6. Assignment status = 'approved'",
+        "7. Builder starts work, status = 'active'",
+        "8. Test: phase value < 3L = no MD approval needed",
+        "9. Test: phase value > 3L = MD approval required"
+      ]
+    },
+    {
+      "id": "F008",
+      "name": "Cohort Member Claim Flow",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Cohort members claim available training sessions",
+      "test_steps": [
+        "1. View available sessions (unassigned)",
+        "2. Click 'Claim' on a session",
+        "3. Session now shows cohort_member as assigned",
+        "4. Test: program value < 2L = self-claim allowed",
+        "5. Test: program value > 2L = needs approval",
+        "6. Verify session appears in 'My Schedule'"
+      ]
+    },
+    {
+      "id": "F009",
+      "name": "Production Learner Claim Flow",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Production learners claim deliverables from queue",
+      "test_steps": [
+        "1. View division queue (e.g., 'video' division)",
+        "2. See available deliverables",
+        "3. Click 'Claim' on deliverable",
+        "4. Test: order value < 50K = self-claim",
+        "5. Test: order value > 50K = needs approval",
+        "6. Submit completed work with file upload",
+        "7. Deliverable status = 'review'"
+      ]
+    },
+    {
+      "id": "F010",
+      "name": "Client Portal - View Solutions",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "External clients view their solutions and status",
+      "test_steps": [
+        "1. Login as external client",
+        "2. See list of all my solutions",
+        "3. Click on a solution",
+        "4. See detailed status/progress",
+        "5. For software: see phase status",
+        "6. For training: see session schedule",
+        "7. For content: see deliverables"
+      ]
+    },
+    {
+      "id": "F011",
+      "name": "Client Portal - Approve Deliverables",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Clients approve or request revision on content",
+      "test_steps": [
+        "1. Login as client",
+        "2. Go to content solution",
+        "3. See deliverable with status 'review'",
+        "4. Download/preview file",
+        "5. Click 'Approve' - status becomes 'approved'",
+        "6. OR click 'Request Revision' with note",
+        "7. Status becomes 'revision'",
+        "8. Verify revision_count increments",
+        "9. Test: revision_count > 3 = flag in MD dashboard"
+      ]
+    },
+    {
+      "id": "F012",
+      "name": "Client Portal - Start New Solution via Intent",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Clients can start new solution by launching Intent interview",
+      "test_steps": [
+        "1. Login as client",
+        "2. Click 'Start New Solution'",
+        "3. Redirects to Intent Platform",
+        "4. Complete interview",
+        "5. Webhook creates solution in Solutions Hub",
+        "6. Client sees new solution in their dashboard"
+      ]
+    },
+    {
+      "id": "F013",
+      "name": "Payment Recording",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Record payments and auto-calculate splits",
+      "test_steps": [
+        "1. Go to phase/program/order",
+        "2. Click 'Record Payment'",
+        "3. Enter amount, payment_method, reference",
+        "4. Save payment",
+        "5. System auto-creates earnings_ledger entries",
+        "6. Verify split percentages match solution type",
+        "7. For software first phase with referral: verify 10% referral bonus"
+      ]
+    },
+    {
+      "id": "F014",
+      "name": "Monthly Payment Batch",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Monthly batch processing with MD visibility",
+      "test_steps": [
+        "1. System aggregates all pending payouts",
+        "2. MD dashboard shows 'Pending Batch'",
+        "3. MD can view all line items",
+        "4. MD can flag specific items",
+        "5. After 48 hours, unflagged items auto-process",
+        "6. Status changes from 'calculated' to 'paid'",
+        "7. Flagged items remain for manual resolution"
+      ]
+    },
+    {
+      "id": "F015",
+      "name": "HOD Discount (10%)",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "HOD can give up to 10% discount from department share",
+      "test_steps": [
+        "1. HOD creates solution for their client",
+        "2. HOD applies 10% discount",
+        "3. System shows: this reduces your 40% share to 30%",
+        "4. HOD confirms",
+        "5. Verify earnings_ledger shows 30% to department",
+        "6. Test: > 10% discount = escalate to MD"
+      ]
+    },
+    {
+      "id": "F016",
+      "name": "Master Dashboard (MD)",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "MD sees all solutions, revenue, department leaderboard",
+      "test_steps": [
+        "1. Login as MD",
+        "2. See total revenue this month",
+        "3. See revenue by solution type (pie chart)",
+        "4. See active solutions count",
+        "5. See department leaderboard",
+        "6. See today's sessions",
+        "7. See pending deliverables count",
+        "8. See partner pipeline (clients at referral_count=1)",
+        "9. See NIRF publication metrics"
+      ]
+    },
+    {
+      "id": "F017",
+      "name": "Department Dashboard (HOD)",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "HOD sees department's clients, revenue, leaderboard position",
+      "test_steps": [
+        "1. Login as HOD",
+        "2. See my department's clients",
+        "3. See my revenue share (40% of collected)",
+        "4. See active phases I own",
+        "5. See my cohort members",
+        "6. See leaderboard position vs other departments"
+      ]
+    },
+    {
+      "id": "F018",
+      "name": "Builder Portal",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Builders see assignments, skills, earnings",
+      "test_steps": [
+        "1. Login as builder",
+        "2. See current phase assignments",
+        "3. See available phases to request",
+        "4. See skills and proficiency levels",
+        "5. See total earnings and breakdown",
+        "6. Update skill after completing phase"
+      ]
+    },
+    {
+      "id": "F019",
+      "name": "Cohort Member Portal",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Cohort members see level, sessions, earnings",
+      "test_steps": [
+        "1. Login as cohort member",
+        "2. See current level (0-3)",
+        "3. See sessions observed/co-led/led counts",
+        "4. See available sessions to claim",
+        "5. See my schedule",
+        "6. See total earnings",
+        "7. Apply for level-up certification"
+      ]
+    },
+    {
+      "id": "F020",
+      "name": "Production Learner Portal",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Production learners see queue, submit work, track earnings",
+      "test_steps": [
+        "1. Login as production learner",
+        "2. See division queue (my division)",
+        "3. Claim deliverable",
+        "4. Upload completed work",
+        "5. See order completion count",
+        "6. See total earnings",
+        "7. See average rating"
+      ]
+    },
+    {
+      "id": "F021",
+      "name": "Multi-Role User",
+      "priority": "P2",
+      "status": "not_started",
+      "description": "User in multiple talent pools sees unified view",
+      "test_steps": [
+        "1. Create user who is builder + cohort member",
+        "2. Login as this user",
+        "3. See unified earnings from all roles",
+        "4. Can switch between Builder and Cohort views",
+        "5. Each role's assignments tracked separately"
+      ]
+    },
+    {
+      "id": "F022",
+      "name": "Discovery Visits",
+      "priority": "P2",
+      "status": "not_started",
+      "description": "Log site visits with observations and pain points",
+      "test_steps": [
+        "1. Go to client page",
+        "2. Click 'Log Discovery Visit'",
+        "3. Enter visit_date, visitors, observations",
+        "4. Add pain_points as list",
+        "5. Upload photos",
+        "6. Link to existing solution or 'resulted in new phase'"
+      ]
+    },
+    {
+      "id": "F023",
+      "name": "Publications (S2P)",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Track publications linked to solutions for accreditation",
+      "test_steps": [
+        "1. Go to solution",
+        "2. Click 'Add Publication'",
+        "3. Select paper_type (problem/design/technical/data/impact)",
+        "4. Enter title, authors, journal",
+        "5. Set status through lifecycle",
+        "6. When published: add DOI, URL",
+        "7. Link publication contributors (builders/learners)",
+        "8. Set NIRF category and NAAC criterion"
+      ]
+    },
+    {
+      "id": "F024",
+      "name": "NIRF Report Generation",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Generate NIRF metrics report for accreditation",
+      "test_steps": [
+        "1. Go to Accreditation > NIRF",
+        "2. See metrics dashboard",
+        "3. Click 'Generate Report'",
+        "4. Select date range",
+        "5. Report shows publications by NIRF category",
+        "6. Export as PDF or Excel",
+        "7. Verify counts match actual data"
+      ]
+    },
+    {
+      "id": "F025",
+      "name": "NAAC Report Generation",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Generate NAAC criteria report for accreditation",
+      "test_steps": [
+        "1. Go to Accreditation > NAAC",
+        "2. See criteria dashboard (C1-C7)",
+        "3. Click 'Generate Report'",
+        "4. Report shows publications by criterion",
+        "5. Shows consultancy revenue under C3",
+        "6. Export as PDF or Excel"
+      ]
+    },
+    {
+      "id": "F026",
+      "name": "Intent Platform Integration",
+      "priority": "P0",
+      "status": "not_started",
+      "description": "Completed Intent interviews create solutions automatically",
+      "test_steps": [
+        "1. Complete interview on Intent Platform",
+        "2. Webhook triggers to Solutions Hub",
+        "3. Client record created/updated",
+        "4. Solution record created",
+        "5. intent_session_id linked",
+        "6. Partner discount auto-applied if applicable",
+        "7. Solution visible in client portal immediately"
+      ]
+    },
+    {
+      "id": "F027",
+      "name": "Revision Count Flagging",
+      "priority": "P2",
+      "status": "not_started",
+      "description": "Flag excessive revisions to MD",
+      "test_steps": [
+        "1. Create content deliverable",
+        "2. Client requests revision 1, 2, 3",
+        "3. On revision 4: system flags to MD dashboard",
+        "4. MD can see flagged items",
+        "5. MD can intervene or acknowledge"
+      ]
+    },
+    {
+      "id": "F028",
+      "name": "Departure Handling",
+      "priority": "P2",
+      "status": "not_started",
+      "description": "Handle talent leaving mid-project",
+      "test_steps": [
+        "1. Builder has active phase assignment",
+        "2. Mark builder as 'withdrawn'",
+        "3. Assignment status = 'withdrawn'",
+        "4. Earnings not calculated for incomplete work",
+        "5. Phase reassigned to another builder",
+        "6. If work was complete, earnings still calculate"
+      ]
+    },
+    {
+      "id": "F029",
+      "name": "MoU Management",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Track MoUs for software solutions",
+      "test_steps": [
+        "1. Go to software solution",
+        "2. Click 'Create MoU'",
+        "3. Enter deal_value, payment_terms",
+        "4. Status = 'draft'",
+        "5. Upload MoU document",
+        "6. Mark as 'sent', then 'signed'",
+        "7. Set start_date, expiry_date",
+        "8. Track MoU status lifecycle"
+      ]
+    },
+    {
+      "id": "F030",
+      "name": "In-App Notifications",
+      "priority": "P1",
+      "status": "not_started",
+      "description": "Dashboard alerts for pending items",
+      "test_steps": [
+        "1. Create pending assignment request",
+        "2. HOD sees notification badge",
+        "3. Click notification to go to approval screen",
+        "4. Create overdue payment",
+        "5. Finance sees notification",
+        "6. All notification types: approvals, deadlines, flags"
+      ]
+    }
+  ]
+}
