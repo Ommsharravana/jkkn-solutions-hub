@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/batch-payments",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/mou-expiry",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

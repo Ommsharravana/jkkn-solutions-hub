@@ -7,6 +7,7 @@ import type {
   AssignmentStatus,
   BuilderRole,
 } from '@/types/database'
+import { notifyAssignmentRequested, notifyAssignmentApproved } from './notifications'
 
 // Approval thresholds from spec
 const APPROVAL_THRESHOLDS = {
@@ -280,6 +281,20 @@ export async function claimPhase(
     .single()
 
   if (error) throw error
+
+  // Send notifications
+  try {
+    if (canAutoApprove) {
+      // Notify builder that assignment was auto-approved
+      await notifyAssignmentApproved('builder', data.id)
+    } else {
+      // Notify HOD/MD about assignment request
+      await notifyAssignmentRequested('builder', data.id)
+    }
+  } catch (err) {
+    console.error('Failed to send assignment notification:', err)
+  }
+
   return data
 }
 

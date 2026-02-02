@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { SolutionMou, MouStatus } from '@/types/database'
+import { notifyMouExpiring, checkMouExpiryNotifications } from './notifications'
 
 // Extended MoU type with solution info
 export interface MouWithSolution extends SolutionMou {
@@ -270,6 +271,27 @@ export function isExpiringSoon(expiryDate: string | null, thresholdDays: number 
   const daysUntil = getDaysUntilExpiry(expiryDate)
   if (daysUntil === null) return false
   return daysUntil > 0 && daysUntil <= thresholdDays
+}
+
+/**
+ * Run MoU expiry notification check
+ * Should be called daily via cron job or API route
+ */
+export async function runMouExpiryCheck(thresholdDays: number = 30): Promise<{ notified: number }> {
+  return checkMouExpiryNotifications(thresholdDays)
+}
+
+/**
+ * Send expiry notification for a specific MoU
+ */
+export async function sendMouExpiryNotification(mouId: string): Promise<void> {
+  const mou = await getMouById(mouId)
+  if (!mou || !mou.expiry_date) return
+
+  const daysUntil = getDaysUntilExpiry(mou.expiry_date)
+  if (daysUntil !== null && daysUntil > 0 && daysUntil <= 30) {
+    await notifyMouExpiring(mouId, daysUntil)
+  }
 }
 
 // MoU statistics

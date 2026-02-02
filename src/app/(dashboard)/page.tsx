@@ -30,6 +30,7 @@ import {
   BookOpen,
   RefreshCw,
   ArrowUpRight,
+  AlertTriangle,
 } from 'lucide-react'
 import {
   getDashboardStats,
@@ -40,6 +41,7 @@ import {
   getPendingDeliverables,
   getPartnerPipeline,
   getDashboardNIRFMetrics,
+  getHighRevisionDeliverables,
   formatINR,
   formatCompactINR,
   type DashboardStats,
@@ -49,6 +51,7 @@ import {
   type PendingDeliverable,
   type PartnerPipelineClient,
   type DashboardNIRFMetrics,
+  type HighRevisionDeliverable,
 } from '@/services/dashboard'
 import type { SolutionStatus } from '@/types/database'
 
@@ -601,6 +604,95 @@ function PartnerPipelineList({
   )
 }
 
+// High Revision Alerts Component
+function HighRevisionAlerts({
+  data,
+  loading,
+}: {
+  data?: HighRevisionDeliverable[]
+  loading?: boolean
+}) {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-4 w-56" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-green-500" />
+            High Revision Alerts
+          </CardTitle>
+          <CardDescription>Deliverables with excessive revisions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-green-600">No deliverables with high revision counts</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="border-red-200 bg-red-50/30">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-red-500" />
+          High Revision Alerts
+        </CardTitle>
+        <CardDescription>Deliverables with more than 3 revisions require attention</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {data.map((deliverable) => (
+            <div
+              key={deliverable.id}
+              className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-100"
+            >
+              <div className="space-y-1">
+                <div className="font-medium text-sm">{deliverable.title}</div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {deliverable.order_type && (
+                    <span className="capitalize">{deliverable.order_type}</span>
+                  )}
+                  {deliverable.client_name && (
+                    <>
+                      <span>-</span>
+                      <span>{deliverable.client_name}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="destructive" className="font-bold">
+                  {deliverable.revision_count} revisions
+                </Badge>
+                <Badge className={deliverableStatusColors[deliverable.status] || ''} variant="outline">
+                  {deliverable.status}
+                </Badge>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 // NIRF Metrics Component
 function DashboardNIRFMetricsCard({
   data,
@@ -703,6 +795,11 @@ export default function DashboardPage() {
     queryFn: getDashboardNIRFMetrics,
   })
 
+  const { data: highRevisionDeliverables, isLoading: highRevisionLoading } = useQuery({
+    queryKey: ['dashboard', 'highRevisionDeliverables'],
+    queryFn: () => getHighRevisionDeliverables(3),
+  })
+
   // Calculate month-over-month change
   const revenueChange =
     stats?.revenue_last_month && stats.revenue_last_month > 0
@@ -767,9 +864,10 @@ export default function DashboardPage() {
         <SolutionsStatus data={solutionsByStatus} loading={solutionsLoading} />
       </div>
 
-      {/* Department Leaderboard */}
+      {/* Department Leaderboard + High Revision Alerts */}
       <div className="grid gap-4 md:grid-cols-2">
         <DepartmentLeaderboard data={departmentLeaderboard} loading={deptLoading} />
+        <HighRevisionAlerts data={highRevisionDeliverables} loading={highRevisionLoading} />
       </div>
 
       {/* Sessions, Deliverables, Pipeline, NIRF */}

@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { MetricCard, ScoreOverview } from './metric-card'
 import { useNAACCriteria, useNAACReport } from '@/hooks/use-accreditation'
+import { exportNAACReport, downloadBlob } from '@/services/export'
 import {
   BookOpen,
   Users,
@@ -14,27 +16,33 @@ import {
   Heart,
   Settings,
   Leaf,
-  Download,
+  FileText,
+  FileSpreadsheet,
   AlertCircle,
   TrendingUp,
+  Loader2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function NAACDashboard() {
   const { data: criteria, isLoading, error } = useNAACCriteria()
   const { data: report } = useNAACReport()
+  const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null)
 
-  const handleExport = () => {
-    if (!report) return
-
-    const blob = new Blob([JSON.stringify(report, null, 2)], {
-      type: 'application/json',
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `naac-report-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    try {
+      setExporting(format)
+      const blob = await exportNAACReport(format)
+      const date = new Date().toISOString().split('T')[0]
+      const extension = format === 'pdf' ? 'pdf' : 'xlsx'
+      downloadBlob(blob, `NAAC-Report-JKKN-${date}.${extension}`)
+      toast.success(`NAAC report exported as ${format.toUpperCase()}`)
+    } catch (err) {
+      console.error('Export failed:', err)
+      toast.error(`Failed to export ${format.toUpperCase()} report`)
+    } finally {
+      setExporting(null)
+    }
   }
 
   if (isLoading) {
@@ -72,10 +80,31 @@ export function NAACDashboard() {
             National Assessment and Accreditation Council evaluation
           </p>
         </div>
-        <Button onClick={handleExport} disabled={!report}>
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => handleExport('pdf')}
+            disabled={exporting !== null}
+          >
+            {exporting === 'pdf' ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            Export PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => handleExport('excel')}
+            disabled={exporting !== null}
+          >
+            {exporting === 'excel' ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+            )}
+            Export Excel
+          </Button>
+        </div>
       </div>
 
       {/* Score Overview */}

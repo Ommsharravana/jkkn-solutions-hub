@@ -462,3 +462,62 @@ export function formatCompactINR(amount: number): string {
   }
   return formatINR(amount)
 }
+
+// High revision deliverables type
+export interface HighRevisionDeliverable {
+  id: string
+  title: string
+  revision_count: number
+  status: string
+  order_type: string | null
+  client_name: string | null
+  solution_id: string | null
+  created_at: string
+}
+
+// Get deliverables with revision_count above threshold (default: 3)
+export async function getHighRevisionDeliverables(threshold: number = 3): Promise<HighRevisionDeliverable[]> {
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from('content_deliverables')
+    .select(`
+      id,
+      title,
+      revision_count,
+      status,
+      created_at,
+      order:content_orders(
+        order_type,
+        solution_id,
+        solution:solutions(
+          client:clients(name)
+        )
+      )
+    `)
+    .gt('revision_count', threshold)
+    .in('status', ['pending', 'in_progress', 'review', 'revision'])
+    .order('revision_count', { ascending: false })
+    .limit(10)
+
+  if (error) throw error
+
+  return (data || []).map((d) => {
+    const order = Array.isArray(d.order) ? d.order[0] : d.order
+    const solution = order?.solution
+    const solutionData = Array.isArray(solution) ? solution[0] : solution
+    const client = solutionData?.client
+    const clientData = Array.isArray(client) ? client[0] : client
+
+    return {
+      id: d.id,
+      title: d.title,
+      revision_count: d.revision_count,
+      status: d.status,
+      order_type: order?.order_type || null,
+      client_name: clientData?.name || null,
+      solution_id: order?.solution_id || null,
+      created_at: d.created_at,
+    }
+  })
+}

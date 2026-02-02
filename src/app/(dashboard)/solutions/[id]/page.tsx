@@ -65,13 +65,19 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { PublicationForm, PublicationCard } from '@/components/accreditation'
+import { CommunicationTimeline, CommunicationForm } from '@/components/communications'
 import { usePublications } from '@/hooks/use-publications'
-import type { SolutionStatus, SolutionType } from '@/types/database'
+import { useSolutionCommunications, useCreateCommunication, useUpdateCommunication, useDeleteCommunication } from '@/hooks/use-communications'
+import { usePayments, useUpdatePayment, useFlagPayment } from '@/hooks/use-payments'
+import { useTrainingProgramBySolution as useTrainingProgram } from '@/hooks/use-training'
+import { useContentOrderBySolution } from '@/hooks/use-content-orders'
+import type { SolutionStatus, SolutionType, ClientCommunication, CommunicationType, CommunicationDirection, PaymentStatus, PaymentType } from '@/types/database'
 import {
   getProgramTypeLabel,
   getTrackLabel,
   getLocationPreferenceLabel,
 } from '@/services/training-programs'
+import { getCommunicationTypeLabel } from '@/services/communications'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -439,38 +445,10 @@ export default function SolutionDetailPage({ params }: PageProps) {
         <PublicationsTab solutionId={solution.id} />
 
         {/* Payments Tab */}
-        <TabsContent value="payments">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payments</CardTitle>
-              <CardDescription>
-                Payment history and revenue splits
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground text-center py-10">
-                No payments recorded yet. Payments module coming soon.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <SolutionPaymentsTab solutionId={solution.id} solutionType={solution.solution_type} />
 
         {/* Communications Tab */}
-        <TabsContent value="communications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Communications</CardTitle>
-              <CardDescription>
-                Client communication history
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground text-center py-10">
-                No communications logged yet. Communications module coming soon.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <SolutionCommunicationsTab solutionId={solution.id} clientId={solution.client_id} />
       </Tabs>
     </div>
   )
@@ -806,5 +784,407 @@ function MouQuickCard({ solutionId }: { solutionId: string }) {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+// Solution Communications Tab Component
+function SolutionCommunicationsTab({
+  solutionId,
+  clientId,
+}: {
+  solutionId: string
+  clientId: string
+}) {
+  const { user } = useAuth()
+  const { data: communications, isLoading } = useSolutionCommunications(solutionId)
+  const createMutation = useCreateCommunication()
+  const updateMutation = useUpdateCommunication()
+  const deleteMutation = useDeleteCommunication()
+
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingCommunication, setEditingCommunication] = useState<ClientCommunication | null>(null)
+
+  const handleCreate = async (data: {
+    communication_type: CommunicationType
+    direction?: CommunicationDirection | null
+    subject?: string | null
+    summary: string
+    communication_date: string
+    solution_id?: string | null
+    participants: { name: string; role?: string }[]
+    attachments_urls: string[]
+  }) => {
+    try {
+      await createMutation.mutateAsync({
+        ...data,
+        client_id: clientId,
+        solution_id: solutionId,
+        recorded_by: user?.id || null,
+      })
+      toast.success('Communication logged')
+      setIsFormOpen(false)
+    } catch {
+      toast.error('Failed to log communication')
+    }
+  }
+
+  const handleUpdate = async (
+    data: Parameters<typeof updateMutation.mutateAsync>[0]['updates']
+  ) => {
+    if (!editingCommunication) return
+    try {
+      await updateMutation.mutateAsync({
+        id: editingCommunication.id,
+        updates: data,
+      })
+      toast.success('Communication updated')
+      setEditingCommunication(null)
+    } catch {
+      toast.error('Failed to update communication')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteMutation.mutateAsync(id)
+      toast.success('Communication deleted')
+    } catch {
+      toast.error('Failed to delete communication')
+    }
+  }
+
+  return (
+    <TabsContent value="communications">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Communications
+              </CardTitle>
+              <CardDescription>
+                Client communication history for this solution
+              </CardDescription>
+            </div>
+            <Button size="sm" onClick={() => setIsFormOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Log Communication
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32" />
+              ))}
+            </div>
+          ) : communications && communications.length > 0 ? (
+            <CommunicationTimeline
+              communications={communications}
+              onEdit={setEditingCommunication}
+              onDelete={handleDelete}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10">
+              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold">No Communications Yet</h3>
+              <p className="text-muted-foreground text-center max-w-sm mb-4">
+                Log calls, emails, meetings, and other client interactions for this solution.
+              </p>
+              <Button onClick={() => setIsFormOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Log First Communication
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Log Communication</DialogTitle>
+            <DialogDescription>Record a client interaction for this solution</DialogDescription>
+          </DialogHeader>
+          <CommunicationForm
+            clientId={clientId}
+            onSubmit={handleCreate}
+            isLoading={createMutation.isPending}
+            onCancel={() => setIsFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingCommunication} onOpenChange={() => setEditingCommunication(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Communication</DialogTitle>
+            <DialogDescription>Update the communication details</DialogDescription>
+          </DialogHeader>
+          {editingCommunication && (
+            <CommunicationForm
+              communication={editingCommunication}
+              clientId={clientId}
+              onSubmit={handleUpdate}
+              isLoading={updateMutation.isPending}
+              onCancel={() => setEditingCommunication(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </TabsContent>
+  )
+}
+
+// Solution Payments Tab Component
+function SolutionPaymentsTab({
+  solutionId,
+  solutionType,
+}: {
+  solutionId: string
+  solutionType: SolutionType
+}) {
+  const { data: phases } = useSolutionPhases(solutionId)
+  const { data: program } = useTrainingProgram(solutionId)
+  const { data: order } = useContentOrderBySolution(solutionId)
+
+  // Get the relevant entity IDs for payments lookup
+  const phaseIds = phases?.map(p => p.id) || []
+  const programId = program?.id
+  const orderId = order?.id
+
+  // For now, get all payments and filter - ideally we'd have a backend filter
+  const { data: allPayments, isLoading } = usePayments()
+  const updatePayment = useUpdatePayment()
+  const flagPayment = useFlagPayment()
+
+  // Filter payments for this solution
+  const payments = allPayments?.filter(payment => {
+    if (solutionType === 'software' && payment.phase_id && phaseIds.includes(payment.phase_id)) {
+      return true
+    }
+    if (solutionType === 'training' && payment.program_id === programId) {
+      return true
+    }
+    if (solutionType === 'content' && payment.order_id === orderId) {
+      return true
+    }
+    return false
+  }) || []
+
+  const handleMarkReceived = async (id: string) => {
+    try {
+      await updatePayment.mutateAsync({
+        id,
+        input: {
+          status: 'received',
+          paid_at: new Date().toISOString(),
+        },
+      })
+      toast.success('Payment marked as received')
+    } catch {
+      toast.error('Failed to update payment')
+    }
+  }
+
+  const handleFlag = async (id: string) => {
+    const reason = prompt('Enter reason for flagging this payment:')
+    if (!reason) return
+
+    try {
+      await flagPayment.mutateAsync({ id, reason })
+      toast.success('Payment flagged for MD review')
+    } catch {
+      toast.error('Failed to flag payment')
+    }
+  }
+
+  const statusColors: Record<PaymentStatus, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    invoiced: 'bg-blue-100 text-blue-800',
+    received: 'bg-green-100 text-green-800',
+    overdue: 'bg-red-100 text-red-800',
+    failed: 'bg-gray-100 text-gray-800',
+  }
+
+  const paymentTypeLabels: Record<PaymentType, string> = {
+    advance: 'Advance',
+    milestone: 'Milestone',
+    completion: 'Completion',
+    mou_signing: 'MoU Signing',
+    deployment: 'Deployment',
+    acceptance: 'Acceptance',
+    amc: 'AMC',
+  }
+
+  // Calculate totals
+  const totalAmount = payments.reduce((sum, p) => sum + Number(p.amount), 0)
+  const receivedAmount = payments
+    .filter(p => p.status === 'received')
+    .reduce((sum, p) => sum + Number(p.amount), 0)
+  const pendingAmount = payments
+    .filter(p => p.status === 'pending' || p.status === 'invoiced')
+    .reduce((sum, p) => sum + Number(p.amount), 0)
+
+  return (
+    <TabsContent value="payments">
+      <div className="space-y-4">
+        {/* Summary Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Amount
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalAmount)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-green-600">Received</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {formatCurrency(receivedAmount)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-yellow-600">Pending</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600">
+                {formatCurrency(pendingAmount)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Payments Table */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Payment History
+                </CardTitle>
+                <CardDescription>
+                  All payments for this solution
+                </CardDescription>
+              </div>
+              <Button size="sm" asChild>
+                <Link href={`/payments/new?solution=${solutionId}`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Record Payment
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-16" />
+                ))}
+              </div>
+            ) : payments.length > 0 ? (
+              <div className="border rounded-lg">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-4 py-3 text-left text-sm font-medium">Type</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Due Date</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium">Reference</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payments.map((payment) => {
+                      const isFlagged = payment.notes?.includes('[FLAGGED]')
+                      return (
+                        <tr key={payment.id} className="border-b last:border-0">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">
+                                {payment.payment_type
+                                  ? paymentTypeLabels[payment.payment_type]
+                                  : '-'}
+                              </Badge>
+                              {isFlagged && (
+                                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium">
+                            {formatCurrency(payment.amount)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge className={statusColors[payment.status]}>
+                              {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {payment.due_date
+                              ? format(new Date(payment.due_date), 'dd MMM yyyy')
+                              : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground text-sm">
+                            {payment.reference_number || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            {payment.status === 'pending' && (
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleMarkReceived(payment.id)}
+                                >
+                                  Mark Received
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleFlag(payment.id)}
+                                >
+                                  Flag
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10">
+                <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold">No Payments Yet</h3>
+                <p className="text-muted-foreground text-center max-w-sm mb-4">
+                  Record payments to track revenue for this solution.
+                </p>
+                <Button asChild>
+                  <Link href={`/payments/new?solution=${solutionId}`}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Record First Payment
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </TabsContent>
   )
 }

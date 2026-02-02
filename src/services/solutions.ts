@@ -20,6 +20,7 @@ export interface CreateSolutionInput {
   description?: string
   lead_department_id: string
   base_price?: number
+  hod_discount?: number
   started_date?: string
   target_completion?: string
   created_by: string
@@ -32,6 +33,7 @@ export interface UpdateSolutionInput {
   status?: SolutionStatus
   lead_department_id?: string
   base_price?: number
+  hod_discount?: number
   final_price?: number
   started_date?: string
   target_completion?: string
@@ -72,11 +74,12 @@ async function generateSolutionCode(): Promise<string> {
   return `${prefix}${String(nextNumber).padStart(3, '0')}`
 }
 
-// Calculate final price with partner discount
+// Calculate final price with partner discount and HOD discount
 async function calculateFinalPrice(
   clientId: string,
-  basePrice: number
-): Promise<{ finalPrice: number; partnerDiscount: number }> {
+  basePrice: number,
+  hodDiscount: number = 0
+): Promise<{ finalPrice: number; partnerDiscount: number; hodDiscountAmount: number }> {
   const supabase = createClient()
 
   const { data: client, error } = await supabase
@@ -98,9 +101,13 @@ async function calculateFinalPrice(
     partnerDiscount = client.partner_discount
   }
 
-  const finalPrice = basePrice * (1 - partnerDiscount)
+  // Calculate HOD discount amount (0-10% from department's share)
+  // HOD discount reduces the client's final price
+  const priceAfterPartnerDiscount = basePrice * (1 - partnerDiscount)
+  const hodDiscountAmount = priceAfterPartnerDiscount * (hodDiscount / 100)
+  const finalPrice = priceAfterPartnerDiscount - hodDiscountAmount
 
-  return { finalPrice, partnerDiscount }
+  return { finalPrice, partnerDiscount, hodDiscountAmount }
 }
 
 export async function getSolutions(filters?: SolutionFilters): Promise<SolutionWithClient[]> {
@@ -167,12 +174,15 @@ export async function createSolution(input: CreateSolutionInput): Promise<Soluti
   // Generate solution code
   const solutionCode = await generateSolutionCode()
 
-  // Calculate final price with partner discount if base price is provided
+  // Validate HOD discount (0-10%)
+  const hodDiscount = Math.min(Math.max(input.hod_discount || 0, 0), 10)
+
+  // Calculate final price with partner discount and HOD discount if base price is provided
   let finalPrice = input.base_price
   let partnerDiscount = 0
 
   if (input.base_price) {
-    const pricing = await calculateFinalPrice(input.client_id, input.base_price)
+    const pricing = await calculateFinalPrice(input.client_id, input.base_price, hodDiscount)
     finalPrice = pricing.finalPrice
     partnerDiscount = pricing.partnerDiscount
   }
@@ -189,6 +199,7 @@ export async function createSolution(input: CreateSolutionInput): Promise<Soluti
       lead_department_id: input.lead_department_id,
       base_price: input.base_price,
       partner_discount_applied: partnerDiscount,
+      hod_discount: hodDiscount,
       final_price: finalPrice,
       started_date: input.started_date,
       target_completion: input.target_completion,
@@ -205,20 +216,30 @@ export async function createSolution(input: CreateSolutionInput): Promise<Soluti
 export async function updateSolution(id: string, input: UpdateSolutionInput): Promise<Solution> {
   const supabase = createClient()
 
-  // If base_price is being updated, recalculate final price
-  const updatedInput = { ...input }
+  // If base_price or hod_discount is being updated, recalculate final price
+  const updatedInput: Record<string, unknown> = { ...input }
 
-  if (input.base_price !== undefined) {
-    // Get the solution's client_id
+  // Validate HOD discount if provided
+  if (input.hod_discount !== undefined) {
+    updatedInput.hod_discount = Math.min(Math.max(input.hod_discount, 0), 10)
+  }
+
+  if (input.base_price !== undefined || input.hod_discount !== undefined) {
+    // Get the solution's client_id and current values
     const { data: solution } = await supabase
       .from('solutions')
-      .select('client_id')
+      .select('client_id, base_price, hod_discount')
       .eq('id', id)
       .single()
 
     if (solution) {
-      const pricing = await calculateFinalPrice(solution.client_id, input.base_price)
-      updatedInput.final_price = pricing.finalPrice
+      const basePrice = input.base_price ?? solution.base_price
+      const hodDiscount = input.hod_discount ?? solution.hod_discount ?? 0
+
+      if (basePrice) {
+        const pricing = await calculateFinalPrice(solution.client_id, basePrice, hodDiscount)
+        updatedInput.final_price = pricing.finalPrice
+      }
     }
   }
 

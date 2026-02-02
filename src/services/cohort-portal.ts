@@ -18,6 +18,7 @@ import type {
   CohortAssignment,
   EarningsLedger,
 } from '@/types/database'
+import { notifyLevelUpRequest } from './notifications'
 
 // ============================================
 // TYPES
@@ -664,6 +665,13 @@ export async function requestLevelUp(memberId: string): Promise<{ success: boole
     throw new Error(
       `Not eligible yet. ${progress.requirements_for_next_level.description}`
     )
+  }
+
+  // Notify training council about level up request
+  try {
+    await notifyLevelUpRequest(memberId)
+  } catch (err) {
+    console.error('Failed to send level up notification:', err)
   }
 
   // In production, this would create an approval request

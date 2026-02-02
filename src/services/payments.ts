@@ -11,6 +11,7 @@ import type {
   EarningsLedger,
 } from '@/types/database'
 import { calculateRevenueSplits, calculateAndDistributeSplits, type SplitType } from './revenue-splits'
+import { notifyPaymentReceived } from './notifications'
 
 // Extended payment type with relations
 export interface PaymentWithDetails extends Payment {
@@ -260,6 +261,12 @@ export async function createPayment(input: CreatePaymentInput): Promise<Payment>
   // Auto-calculate and create earnings splits if payment is received
   if (input.status === 'received') {
     await calculateAndDistributeSplits(payment.id)
+    // Send notification for payment received
+    try {
+      await notifyPaymentReceived(payment.id)
+    } catch (err) {
+      console.error('Failed to send payment notification:', err)
+    }
   }
 
   return payment
@@ -298,6 +305,14 @@ export async function updatePayment(
     !currentPayment?.split_calculated
   ) {
     const splitResult = await calculateAndDistributeSplits(id)
+
+    // Send notification for payment received
+    try {
+      await notifyPaymentReceived(id)
+    } catch (err) {
+      console.error('Failed to send payment notification:', err)
+    }
+
     return {
       ...data,
       splits_result: {

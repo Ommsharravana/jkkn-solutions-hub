@@ -119,6 +119,7 @@ export interface Solution {
   lead_department_id: string;
   base_price: number | null;
   partner_discount_applied: number;
+  hod_discount: number;
   final_price: number | null;
   started_date: string | null;
   target_completion: string | null;

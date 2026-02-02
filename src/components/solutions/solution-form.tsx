@@ -26,6 +26,8 @@ import {
 } from '@/components/ui/select'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
 import { SolutionTypeSelector } from './solution-type-selector'
 import { useCreateSolution } from '@/hooks/use-solutions'
 import { useAuth } from '@/hooks/use-auth'
@@ -56,6 +58,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   lead_department_id: z.string().min(1, 'Please select a department'),
   base_price: z.number().min(0).optional(),
+  hod_discount: z.number().min(0).max(10).optional(),
   started_date: z.date().optional(),
   target_completion: z.date().optional(),
 })
@@ -85,6 +88,7 @@ export function SolutionForm() {
       description: '',
       lead_department_id: '',
       base_price: undefined,
+      hod_discount: 0,
       started_date: undefined,
       target_completion: undefined,
     },
@@ -134,6 +138,7 @@ export function SolutionForm() {
         description: values.description || undefined,
         lead_department_id: values.lead_department_id,
         base_price: values.base_price,
+        hod_discount: values.hod_discount,
         started_date: values.started_date?.toISOString().split('T')[0],
         target_completion: values.target_completion?.toISOString().split('T')[0],
         created_by: user.id,
@@ -374,6 +379,58 @@ export function SolutionForm() {
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="hod_discount"
+                  render={({ field }) => {
+                    const basePrice = form.watch('base_price') || 0
+                    const partnerDiscount = selectedClient?.partner_status !== 'standard' ? 0.5 : 0
+                    const priceAfterPartner = basePrice * (1 - partnerDiscount)
+                    const hodDiscountAmount = priceAfterPartner * ((field.value || 0) / 100)
+                    const finalPrice = priceAfterPartner - hodDiscountAmount
+
+                    return (
+                      <FormItem>
+                        <FormLabel>HOD Discount (%)</FormLabel>
+                        <FormControl>
+                          <div className="space-y-3">
+                            <Slider
+                              min={0}
+                              max={10}
+                              step={1}
+                              value={[field.value || 0]}
+                              onValueChange={([val]) => field.onChange(val)}
+                            />
+                            <div className="flex justify-between text-sm text-muted-foreground">
+                              <span>0%</span>
+                              <span className="font-medium text-foreground">{field.value || 0}%</span>
+                              <span>10%</span>
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          HOD can offer 0-10% discount from department's share to reduce client price.
+                          {basePrice > 0 && (field.value || 0) > 0 && (
+                            <span className="block mt-1 text-amber-600">
+                              HOD discount saves client: {new Intl.NumberFormat('en-IN', {
+                                style: 'currency',
+                                currency: 'INR',
+                                maximumFractionDigits: 0,
+                              }).format(hodDiscountAmount)}
+                              {' '}- Final: {new Intl.NumberFormat('en-IN', {
+                                style: 'currency',
+                                currency: 'INR',
+                                maximumFractionDigits: 0,
+                              }).format(finalPrice)}
+                            </span>
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
+                />
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -492,29 +549,54 @@ export function SolutionForm() {
                       <dd className="text-sm col-span-2">{form.watch('problem_statement')}</dd>
                     </div>
                   )}
-                  {form.watch('base_price') && (
-                    <div className="py-3 grid grid-cols-3">
-                      <dt className="text-sm font-medium text-muted-foreground">Pricing</dt>
-                      <dd className="text-sm col-span-2">
-                        <div>
-                          Base: {new Intl.NumberFormat('en-IN', {
-                            style: 'currency',
-                            currency: 'INR',
-                            maximumFractionDigits: 0,
-                          }).format(form.watch('base_price') || 0)}
-                        </div>
-                        {selectedClient?.partner_status !== 'standard' && (
-                          <div className="text-green-600">
-                            Final (50% partner discount): {new Intl.NumberFormat('en-IN', {
+                  {form.watch('base_price') && (() => {
+                    const basePrice = form.watch('base_price') || 0
+                    const hodDiscount = form.watch('hod_discount') || 0
+                    const partnerDiscount = selectedClient?.partner_status !== 'standard' ? 0.5 : 0
+                    const priceAfterPartner = basePrice * (1 - partnerDiscount)
+                    const hodDiscountAmount = priceAfterPartner * (hodDiscount / 100)
+                    const finalPrice = priceAfterPartner - hodDiscountAmount
+
+                    return (
+                      <div className="py-3 grid grid-cols-3">
+                        <dt className="text-sm font-medium text-muted-foreground">Pricing</dt>
+                        <dd className="text-sm col-span-2 space-y-1">
+                          <div>
+                            Base: {new Intl.NumberFormat('en-IN', {
                               style: 'currency',
                               currency: 'INR',
                               maximumFractionDigits: 0,
-                            }).format((form.watch('base_price') || 0) * 0.5)}
+                            }).format(basePrice)}
                           </div>
-                        )}
-                      </dd>
-                    </div>
-                  )}
+                          {selectedClient?.partner_status !== 'standard' && (
+                            <div className="text-green-600">
+                              After 50% partner discount: {new Intl.NumberFormat('en-IN', {
+                                style: 'currency',
+                                currency: 'INR',
+                                maximumFractionDigits: 0,
+                              }).format(priceAfterPartner)}
+                            </div>
+                          )}
+                          {hodDiscount > 0 && (
+                            <div className="text-amber-600">
+                              HOD Discount ({hodDiscount}%): -{new Intl.NumberFormat('en-IN', {
+                                style: 'currency',
+                                currency: 'INR',
+                                maximumFractionDigits: 0,
+                              }).format(hodDiscountAmount)}
+                            </div>
+                          )}
+                          <div className="font-medium text-primary">
+                            Final Price: {new Intl.NumberFormat('en-IN', {
+                              style: 'currency',
+                              currency: 'INR',
+                              maximumFractionDigits: 0,
+                            }).format(finalPrice)}
+                          </div>
+                        </dd>
+                      </div>
+                    )
+                  })()}
                 </dl>
               </CardContent>
             </Card>

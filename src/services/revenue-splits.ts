@@ -230,21 +230,23 @@ interface ReferralInfo {
 // Determine split type from payment source
 export async function determineSplitType(
   ctx: PaymentContext
-): Promise<{ splitType: SplitType; departmentId?: string } | null> {
+): Promise<{ splitType: SplitType; departmentId?: string; hodDiscount?: number } | null> {
   const supabase = createClient()
 
   if (ctx.phaseId) {
-    // Software solution - get department from phase
+    // Software solution - get department and HOD discount from phase
     const { data: phase } = await supabase
       .from('solution_phases')
-      .select('owner_department_id, solution:solutions(solution_type)')
+      .select('owner_department_id, solution:solutions(solution_type, hod_discount)')
       .eq('id', ctx.phaseId)
       .single()
 
     if (phase) {
+      const solution = Array.isArray(phase.solution) ? phase.solution[0] : phase.solution
       return {
         splitType: 'software',
         departmentId: phase.owner_department_id,
+        hodDiscount: solution?.hod_discount ?? 0,
       }
     }
   }
@@ -253,7 +255,7 @@ export async function determineSplitType(
     // Training solution - get track and department
     const { data: program } = await supabase
       .from('training_programs')
-      .select('track, solution:solutions(lead_department_id)')
+      .select('track, solution:solutions(lead_department_id, hod_discount)')
       .eq('id', ctx.programId)
       .single()
 
@@ -262,6 +264,7 @@ export async function determineSplitType(
       return {
         splitType: program.track === 'track_a' ? 'training_track_a' : 'training_track_b',
         departmentId: solution?.lead_department_id,
+        hodDiscount: solution?.hod_discount ?? 0,
       }
     }
   }
@@ -270,7 +273,7 @@ export async function determineSplitType(
     // Content solution - get department
     const { data: order } = await supabase
       .from('content_orders')
-      .select('solution:solutions(lead_department_id)')
+      .select('solution:solutions(lead_department_id, hod_discount)')
       .eq('id', ctx.orderId)
       .single()
 
@@ -279,6 +282,7 @@ export async function determineSplitType(
       return {
         splitType: 'content',
         departmentId: solution?.lead_department_id,
+        hodDiscount: solution?.hod_discount ?? 0,
       }
     }
   }
@@ -382,8 +386,9 @@ export async function calculateAndDistributeSplits(
   // Check referral eligibility (software only)
   const referralInfo = await checkReferralEligibility(ctx)
 
-  // Calculate splits
+  // Calculate splits (include HOD discount)
   const result = calculateRevenueSplits(ctx.amount, splitInfo.splitType, {
+    hodDiscount: splitInfo.hodDiscount,
     isFirstPhase: referralInfo.isFirstPhase,
     hasReferral: referralInfo.hasReferral,
   })

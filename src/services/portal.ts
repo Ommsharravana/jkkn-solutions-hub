@@ -13,6 +13,7 @@ import type {
   TrainingProgram,
   TrainingSession,
 } from '@/types/database'
+import { notifyDeliverableStatus } from './notifications'
 
 // ============================================
 // PORTAL TYPES
@@ -189,6 +190,14 @@ export async function approveDeliverable(
     .single()
 
   if (error) throw error
+
+  // Send notification to production learners
+  try {
+    await notifyDeliverableStatus(deliverableId, 'approved')
+  } catch (err) {
+    console.error('Failed to send deliverable approval notification:', err)
+  }
+
   return data
 }
 
@@ -237,6 +246,14 @@ export async function requestDeliverableRevision(
     .single()
 
   if (error) throw error
+
+  // Send notification to production learners
+  try {
+    await notifyDeliverableStatus(deliverableId, 'revision')
+  } catch (err) {
+    console.error('Failed to send deliverable revision notification:', err)
+  }
+
   return data
 }
 

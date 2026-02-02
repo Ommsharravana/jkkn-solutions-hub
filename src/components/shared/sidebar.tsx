@@ -16,6 +16,7 @@ import {
   Hammer,
   Video,
   BookOpen,
+  MapPin,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['all'] },
   { name: 'My Department', href: '/department', icon: Building2, roles: ['department_head', 'department_staff'] },
   { name: 'Clients', href: '/clients', icon: Users, roles: ['md_caio', 'department_head', 'department_staff', 'jicate_staff'] },
+  { name: 'Discovery', href: '/discovery', icon: MapPin, roles: ['md_caio', 'department_head', 'department_staff', 'jicate_staff'] },
   { name: 'Solutions', href: '/solutions', icon: Briefcase, roles: ['md_caio', 'department_head', 'department_staff', 'jicate_staff', 'builder', 'cohort_member', 'production_learner', 'client'] },
   { name: 'Software', href: '/software', icon: Hammer, roles: ['md_caio', 'jicate_staff', 'builder'] },
   { name: 'Training', href: '/training', icon: BookOpen, roles: ['md_caio', 'jicate_staff', 'cohort_member', 'department_head'] },

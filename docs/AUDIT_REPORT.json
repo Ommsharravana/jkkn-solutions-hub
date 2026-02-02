@@ -1,0 +1,519 @@
+{
+  "audit_date": "2026-02-02",
+  "auditor": "Claude Opus 4.5",
+  "spec_version": "1.1",
+  "overall_completion": "88%",
+  "summary": {
+    "total_features_in_spec": 30,
+    "fully_implemented": 24,
+    "partially_implemented": 4,
+    "not_implemented": 2,
+    "critical_gaps": 0,
+    "high_gaps": 2,
+    "medium_gaps": 4,
+    "low_gaps": 3
+  },
+  "critical_gaps": [],
+  "high_gaps": [
+    {
+      "id": "HG-001",
+      "area": "NIRF/NAAC Export",
+      "feature": "F024, F025 - Report Export to PDF/Excel",
+      "gap": "NIRF and NAAC dashboards exist with metrics display, but PDF/Excel export functionality is NOT implemented. Export buttons are missing.",
+      "spec_requirement": "Generate NIRF/NAAC reports and export as PDF or Excel with date range selection",
+      "current_state": "nirf-dashboard.tsx and naac-dashboard.tsx show metrics. No export service or UI buttons.",
+      "priority": "HIGH",
+      "effort": "2-3 days",
+      "files_needed": [
+        "src/services/accreditation-export.ts (CREATE)",
+        "src/components/accreditation/nirf-dashboard.tsx (UPDATE - add export button)",
+        "src/components/accreditation/naac-dashboard.tsx (UPDATE - add export button)"
+      ]
+    },
+    {
+      "id": "HG-002",
+      "area": "Monthly Batch Processing",
+      "feature": "F014 - 48-Hour Auto-Processing",
+      "gap": "BatchProcessor component exists but 48-hour auto-processing is NOT implemented. Manual batch approval only.",
+      "spec_requirement": "Aggregate pending payouts monthly. MD visibility with flag capability. Auto-process after 48 hours unless MD flags.",
+      "current_state": "batch-processor.tsx exists. No cron job or scheduled task for auto-processing.",
+      "priority": "HIGH",
+      "effort": "1-2 days",
+      "files_needed": [
+        "src/services/batch-processing.ts (CREATE)",
+        "src/app/api/cron/batch-process/route.ts (CREATE)",
+        "supabase/functions/batch-auto-process (CREATE - edge function)"
+      ]
+    }
+  ],
+  "medium_gaps": [
+    {
+      "id": "MG-001",
+      "area": "HOD Discount",
+      "feature": "F015 - HOD 10% Discount from Department Share",
+      "gap": "HOD discount logic exists in revenue-splits.ts but NO UI for HOD to apply discount during solution creation. Impact on department share is not shown.",
+      "spec_requirement": "HOD can give up to 10% discount. System shows this reduces their 40% share. > 10% escalates to MD.",
+      "current_state": "calculateRevenueSplits supports hodDiscount parameter. Solution form does not have HOD discount field.",
+      "priority": "MEDIUM",
+      "effort": "1 day",
+      "files_needed": [
+        "src/components/solutions/solution-form.tsx (UPDATE - add HOD discount field)",
+        "src/services/solutions.ts (UPDATE - pass HOD discount)"
+      ]
+    },
+    {
+      "id": "MG-002",
+      "area": "Revision Flagging",
+      "feature": "F027 - Excessive Revision Flagging",
+      "gap": "revision_count field exists on deliverables. Flagging to MD dashboard when count > 3 is NOT implemented.",
+      "spec_requirement": "Flag deliverables with revision_count > 3 to MD dashboard. MD can intervene.",
+      "current_state": "revision_count increments correctly. No flagging logic or MD dashboard widget.",
+      "priority": "MEDIUM",
+      "effort": "4-6 hours",
+      "files_needed": [
+        "src/services/dashboard.ts (UPDATE - add getExcessiveRevisions function)",
+        "src/app/(dashboard)/page.tsx (UPDATE - add flagged revisions widget)"
+      ]
+    },
+    {
+      "id": "MG-003",
+      "area": "Talent Departure",
+      "feature": "F028 - Departure Handling Workflow",
+      "gap": "Withdrawal status exists in assignments. Full departure workflow (earnings forfeiture, reassignment) is NOT automated.",
+      "spec_requirement": "When talent leaves mid-project: forfeit incomplete work, pay completed milestones, reassign work",
+      "current_state": "Status can be set to 'withdrawn'. No automated earnings handling or reassignment prompts.",
+      "priority": "MEDIUM",
+      "effort": "1 day",
+      "files_needed": [
+        "src/services/builders.ts (UPDATE - add departure handling)",
+        "src/services/cohort-members.ts (UPDATE - add departure handling)",
+        "src/services/production-learners.ts (UPDATE - add departure handling)"
+      ]
+    },
+    {
+      "id": "MG-004",
+      "area": "Notification Triggers",
+      "feature": "F030 - In-App Notification System",
+      "gap": "Notifications table, bell component, and dropdown exist. Triggers for automatic notifications are NOT connected.",
+      "spec_requirement": "Dashboard alerts for: pending approvals, deadlines, flags, assignments",
+      "current_state": "Notifications can be created manually. No automatic triggers for events.",
+      "priority": "MEDIUM",
+      "effort": "1-2 days",
+      "files_needed": [
+        "supabase/migrations/016_notification_triggers.sql (CREATE)",
+        "src/services/notifications.ts (UPDATE - add notification creation functions)"
+      ]
+    }
+  ],
+  "low_gaps": [
+    {
+      "id": "LG-001",
+      "area": "Solution Detail Tabs",
+      "feature": "Communications Tab, Payments Tab",
+      "gap": "Solution detail page has Communications and Payments tabs showing 'Coming soon' placeholder",
+      "current_state": "CommunicationList and PaymentTable components exist but not wired to solution detail page",
+      "priority": "LOW",
+      "effort": "2-3 hours",
+      "files_needed": [
+        "src/app/(dashboard)/solutions/[id]/page.tsx (UPDATE - wire existing components)"
+      ]
+    },
+    {
+      "id": "LG-002",
+      "area": "Multi-Role User",
+      "feature": "F021 - Unified Profile View",
+      "gap": "Users can belong to multiple talent pools. Unified earnings view across roles is NOT implemented.",
+      "current_state": "Each portal (builder/cohort/production) shows its own earnings. No unified profile page.",
+      "priority": "LOW",
+      "effort": "4-6 hours",
+      "files_needed": [
+        "src/app/my/profile/page.tsx (CREATE)",
+        "src/services/unified-profile.ts (CREATE)"
+      ]
+    },
+    {
+      "id": "LG-003",
+      "area": "Discovery Page",
+      "feature": "Standalone Discovery Visits Page",
+      "gap": "Discovery visits work on client detail page. No standalone /discovery page exists.",
+      "current_state": "visit-list.tsx and visit-form.tsx exist. Client detail page has Discovery tab.",
+      "priority": "LOW",
+      "effort": "2-3 hours",
+      "files_needed": [
+        "src/app/(dashboard)/discovery/page.tsx (CREATE)"
+      ]
+    }
+  ],
+  "completed_features": [
+    {
+      "id": "F001",
+      "name": "Authentication - Internal (Google OAuth)",
+      "status": "COMPLETE",
+      "notes": "MyJKKN OAuth via Google Sign-in implemented. Login page supports both Google OAuth and email/password."
+    },
+    {
+      "id": "F002",
+      "name": "Authentication - External (Email/Password)",
+      "status": "COMPLETE",
+      "notes": "Supabase Auth with email/password. Registration, forgot password, reset password flows all work."
+    },
+    {
+      "id": "F003",
+      "name": "Client Management",
+      "status": "COMPLETE",
+      "notes": "Full CRUD. Partner status (yi, alumni, mou, referral, standard). Auto 50% partner discount. Client cards, tables, forms."
+    },
+    {
+      "id": "F004",
+      "name": "Solution Creation (Software)",
+      "status": "COMPLETE",
+      "notes": "Solution form with type selector. Auto-generated solution_code. Phase creation. Status workflow."
+    },
+    {
+      "id": "F005",
+      "name": "Solution Creation (Training)",
+      "status": "COMPLETE",
+      "notes": "Training programs with track A/B. Sessions CRUD. Revenue split model applied per track."
+    },
+    {
+      "id": "F006",
+      "name": "Solution Creation (Content)",
+      "status": "COMPLETE",
+      "notes": "Content orders with order_type, division. Deliverables CRUD. Status workflow."
+    },
+    {
+      "id": "F007",
+      "name": "Builder Assignment Workflow",
+      "status": "COMPLETE",
+      "notes": "Builders can request phases. Threshold-based auto-approval (<=3L). Assignment status lifecycle. Builder portal with available phases."
+    },
+    {
+      "id": "F008",
+      "name": "Cohort Member Claim Flow",
+      "status": "COMPLETE",
+      "notes": "Cohort members can browse and claim sessions. Level progression (0-3). Schedule view. Session claim button with threshold check."
+    },
+    {
+      "id": "F009",
+      "name": "Production Learner Claim Flow",
+      "status": "COMPLETE",
+      "notes": "Production learners see division queue. Can claim deliverables. Submit work flow. Earnings tracking."
+    },
+    {
+      "id": "F010",
+      "name": "Client Portal - View Solutions",
+      "status": "COMPLETE",
+      "notes": "Full client portal at /portal/*. Dashboard with stats. Solutions list. Solution detail with progress."
+    },
+    {
+      "id": "F011",
+      "name": "Client Portal - Approve Deliverables",
+      "status": "COMPLETE",
+      "notes": "Deliverables page shows items needing approval. Approve/Request Revision buttons. Revision count tracking."
+    },
+    {
+      "id": "F012",
+      "name": "Client Portal - Invoices",
+      "status": "COMPLETE",
+      "notes": "Invoice table showing payments. Status badges. Total paid/outstanding in dashboard."
+    },
+    {
+      "id": "F013",
+      "name": "Payment Recording",
+      "status": "COMPLETE",
+      "notes": "Payment form with phase/program/order linking. Revenue split calculation implemented in revenue-splits.ts. calculateAndDistributeSplits function auto-creates earnings_ledger entries."
+    },
+    {
+      "id": "F016",
+      "name": "Master Dashboard (MD)",
+      "status": "COMPLETE",
+      "notes": "Full dashboard with real data: revenue this month, by solution type, department leaderboard, today's sessions, pending deliverables, partner pipeline, NIRF metrics."
+    },
+    {
+      "id": "F017",
+      "name": "Department Dashboard (HOD)",
+      "status": "COMPLETE",
+      "notes": "Department dashboard at /department. Shows: my clients, revenue share (with breakdown), active phases, cohort members, builders, leaderboard position."
+    },
+    {
+      "id": "F018",
+      "name": "Builder Portal",
+      "status": "COMPLETE",
+      "notes": "Full portal at /builder/*. Assignments page, available phases, skills management, earnings breakdown."
+    },
+    {
+      "id": "F019",
+      "name": "Cohort Member Portal",
+      "status": "COMPLETE",
+      "notes": "Full portal at /cohort/*. Level progress, sessions (browse + schedule), earnings, level-up pathway."
+    },
+    {
+      "id": "F020",
+      "name": "Production Learner Portal",
+      "status": "COMPLETE",
+      "notes": "Full portal at /production/*. Queue page, my work, earnings, submit deliverable workflow."
+    },
+    {
+      "id": "F022",
+      "name": "Discovery Visits",
+      "status": "COMPLETE",
+      "notes": "Visit form and list on client detail page. Observations, pain points, photos, next steps."
+    },
+    {
+      "id": "F023",
+      "name": "Publications (S2P)",
+      "status": "COMPLETE",
+      "notes": "Publications CRUD. Paper types. Status lifecycle. NIRF/NAAC criterion linking. Publication contributors."
+    },
+    {
+      "id": "F024",
+      "name": "NIRF Dashboard",
+      "status": "PARTIAL",
+      "notes": "NIRF dashboard shows metrics. Export to PDF/Excel NOT implemented."
+    },
+    {
+      "id": "F025",
+      "name": "NAAC Dashboard",
+      "status": "PARTIAL",
+      "notes": "NAAC dashboard shows criteria. Export to PDF/Excel NOT implemented."
+    },
+    {
+      "id": "F026",
+      "name": "Intent Platform Integration",
+      "status": "COMPLETE",
+      "notes": "Webhook at /api/webhooks/intent. Validates payload, creates client, creates solution, links intent_session_id, applies partner discount. Idempotency check."
+    },
+    {
+      "id": "F029",
+      "name": "MoU Management",
+      "status": "COMPLETE",
+      "notes": "Full MoU service. Create, update, send, sign, activate lifecycle. MoU form and status badge. Solution detail has MoU page."
+    },
+    {
+      "id": "RBAC",
+      "name": "Role-Based Access Control",
+      "status": "COMPLETE",
+      "notes": "Middleware.ts implements role-based routing. 8 roles defined: md_caio, department_head, department_staff, jicate_staff, builder, cohort_member, production_learner, client. Route guards and redirects work."
+    }
+  ],
+  "database_audit": {
+    "status": "COMPLETE",
+    "tables_in_spec": 28,
+    "tables_implemented": 28,
+    "migration_files": 15,
+    "notes": "All tables from spec exist. RLS policies implemented. Users table added for auth. Notifications table added."
+  },
+  "routes_audit": {
+    "dashboard_routes": {
+      "implemented": [
+        "/",
+        "/clients",
+        "/clients/new",
+        "/clients/[id]",
+        "/clients/[id]/edit",
+        "/solutions",
+        "/solutions/new",
+        "/solutions/[id]",
+        "/solutions/[id]/mou",
+        "/software",
+        "/software/phases",
+        "/software/builders",
+        "/training",
+        "/training/sessions",
+        "/training/cohort",
+        "/content",
+        "/content/queue",
+        "/content/production",
+        "/payments",
+        "/payments/new",
+        "/payments/batch",
+        "/earnings",
+        "/reports",
+        "/reports/nirf",
+        "/reports/naac",
+        "/publications",
+        "/department"
+      ],
+      "missing": []
+    },
+    "portal_routes": {
+      "implemented": [
+        "/portal",
+        "/portal/solutions",
+        "/portal/solutions/[id]",
+        "/portal/deliverables",
+        "/portal/invoices"
+      ],
+      "missing": []
+    },
+    "talent_portal_routes": {
+      "implemented": [
+        "/builder",
+        "/builder/assignments",
+        "/builder/available",
+        "/builder/skills",
+        "/builder/earnings",
+        "/cohort",
+        "/cohort/sessions",
+        "/cohort/schedule",
+        "/cohort/earnings",
+        "/cohort/level",
+        "/production",
+        "/production/queue",
+        "/production/my-work",
+        "/production/earnings",
+        "/production/submit/[id]"
+      ],
+      "missing": []
+    },
+    "auth_routes": {
+      "implemented": [
+        "/auth/login",
+        "/auth/register",
+        "/auth/forgot-password",
+        "/auth/reset-password"
+      ],
+      "missing": []
+    },
+    "api_routes": {
+      "implemented": [
+        "/api/webhooks/intent"
+      ],
+      "missing": [
+        "/api/cron/batch-process (scheduled task for 48hr auto-processing)"
+      ]
+    }
+  },
+  "services_audit": {
+    "implemented": [
+      "users.ts",
+      "institutions.ts",
+      "notifications.ts",
+      "discovery-visits.ts",
+      "communications.ts",
+      "intent-integration.ts",
+      "accreditation.ts",
+      "content-orders.ts",
+      "content-deliverables.ts",
+      "training-programs.ts",
+      "earnings.ts",
+      "training-sessions.ts",
+      "departments.ts",
+      "clients.ts",
+      "builders.ts",
+      "phases.ts",
+      "cohort-members.ts",
+      "production-learners.ts",
+      "publications.ts",
+      "revenue-splits.ts",
+      "mous.ts",
+      "department-dashboard.ts",
+      "payments.ts",
+      "production-portal.ts",
+      "cohort-portal.ts",
+      "portal.ts",
+      "dashboard.ts",
+      "builder-portal.ts",
+      "solutions.ts"
+    ],
+    "missing": [
+      "accreditation-export.ts (for PDF/Excel export)",
+      "batch-processing.ts (for 48hr auto-processing)",
+      "unified-profile.ts (for multi-role user view)"
+    ]
+  },
+  "business_logic_audit": {
+    "approval_thresholds": {
+      "status": "COMPLETE",
+      "notes": "Thresholds defined in builder-portal.ts (3L for software). Similar logic in cohort-portal and production-portal."
+    },
+    "partner_discount": {
+      "status": "COMPLETE",
+      "notes": "50% auto-discount for yi, alumni, mou, referral partners. Implemented in solutions service and portal."
+    },
+    "revenue_splits": {
+      "status": "COMPLETE",
+      "notes": "All 4 split models implemented: software (40-40-20), training_track_a (60-20-20), training_track_b (30-20-30-20), content (60-20-20). Referral bonus logic included."
+    },
+    "hod_discount": {
+      "status": "PARTIAL",
+      "notes": "Logic exists in revenue-splits.ts. UI to apply discount not implemented."
+    },
+    "level_progression": {
+      "status": "COMPLETE",
+      "notes": "Cohort member levels 0-3 with requirements defined. Level-up pathway shown."
+    }
+  },
+  "components_audit": {
+    "ui_components": 21,
+    "shared_components": 2,
+    "domain_components": {
+      "solutions": 6,
+      "clients": 4,
+      "software": 5,
+      "training": 4,
+      "content": 6,
+      "financials": 5,
+      "accreditation": 4,
+      "discovery": 3,
+      "communications": 3,
+      "notifications": 3,
+      "portal": 5,
+      "cohort": 2
+    }
+  },
+  "hooks_audit": {
+    "total_hooks": 25,
+    "categories": {
+      "auth": 1,
+      "data_fetching": 20,
+      "portal": 4
+    }
+  },
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "recommendation": "Implement NIRF/NAAC PDF/Excel export before accreditation deadline (3 months)",
+      "effort": "2-3 days"
+    },
+    {
+      "priority": "HIGH",
+      "recommendation": "Implement 48-hour batch auto-processing cron job to complete F014",
+      "effort": "1-2 days"
+    },
+    {
+      "priority": "MEDIUM",
+      "recommendation": "Add HOD discount field to solution form and show impact on department share",
+      "effort": "1 day"
+    },
+    {
+      "priority": "MEDIUM",
+      "recommendation": "Add notification triggers for key events (assignment requests, payments due, approvals needed)",
+      "effort": "1-2 days"
+    },
+    {
+      "priority": "LOW",
+      "recommendation": "Wire up Communications and Payments tabs on solution detail page",
+      "effort": "2-3 hours"
+    },
+    {
+      "priority": "LOW",
+      "recommendation": "Create standalone /discovery page for viewing all visits across clients",
+      "effort": "2-3 hours"
+    }
+  ],
+  "testing_status": {
+    "unit_tests": "NOT_IMPLEMENTED",
+    "integration_tests": "NOT_IMPLEMENTED",
+    "e2e_tests": "NOT_IMPLEMENTED",
+    "manual_testing": "REQUIRED",
+    "notes": "No test files found. Recommend adding at least critical path tests before production."
+  },
+  "previous_gap_analysis_comparison": {
+    "previous_critical_count": 2,
+    "current_critical_count": 0,
+    "previous_high_count": 7,
+    "current_high_count": 2,
+    "improvement": "Previous GAP_ANALYSIS.json was outdated. Implementation is significantly more complete than it indicated. Client portal, builder/cohort/production portals, department dashboard, MoU management, and role-based access have all been implemented since that analysis."
+  }
+}

@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { MetricCard, ScoreOverview } from './metric-card'
 import { useNIRFMetrics, useNIRFReport } from '@/hooks/use-accreditation'
+import { exportNIRFReport, downloadBlob } from '@/services/export'
 import {
   BookOpen,
   Briefcase,
@@ -13,26 +15,33 @@ import {
   Users,
   Star,
   Download,
+  FileSpreadsheet,
+  FileText,
   AlertCircle,
   TrendingUp,
+  Loader2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function NIRFDashboard() {
   const { data: metrics, isLoading, error } = useNIRFMetrics()
-  const { data: report, refetch: refreshReport } = useNIRFReport()
+  const { data: report } = useNIRFReport()
+  const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null)
 
-  const handleExport = () => {
-    if (!report) return
-
-    const blob = new Blob([JSON.stringify(report, null, 2)], {
-      type: 'application/json',
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `nirf-report-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    try {
+      setExporting(format)
+      const blob = await exportNIRFReport(format)
+      const date = new Date().toISOString().split('T')[0]
+      const extension = format === 'pdf' ? 'pdf' : 'xlsx'
+      downloadBlob(blob, `NIRF-Report-JKKN-${date}.${extension}`)
+      toast.success(`NIRF report exported as ${format.toUpperCase()}`)
+    } catch (err) {
+      console.error('Export failed:', err)
+      toast.error(`Failed to export ${format.toUpperCase()} report`)
+    } finally {
+      setExporting(null)
+    }
   }
 
   if (isLoading) {
@@ -70,10 +79,31 @@ export function NIRFDashboard() {
             National Institutional Ranking Framework assessment
           </p>
         </div>
-        <Button onClick={handleExport} disabled={!report}>
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => handleExport('pdf')}
+            disabled={exporting !== null}
+          >
+            {exporting === 'pdf' ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            Export PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => handleExport('excel')}
+            disabled={exporting !== null}
+          >
+            {exporting === 'excel' ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+            )}
+            Export Excel
+          </Button>
+        </div>
       </div>
 
       {/* Score Overview */}
