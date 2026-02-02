@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Building2,
@@ -91,6 +91,10 @@ export default function DepartmentsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [institutionFilter, setInstitutionFilter] = useState<string>('all')
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
+
+  // Pagination state
+  const [page, setPage] = useState(1)
+  const pageSize = 10
 
   // Get unique institutions for filter
   const institutions = useMemo(() => {
@@ -183,9 +187,21 @@ export default function DepartmentsPage() {
     setSearchQuery('')
     setInstitutionFilter('all')
     setActiveFilter('all')
+    setPage(1)
   }
 
   const hasActiveFilters = searchQuery || institutionFilter !== 'all' || activeFilter !== 'all'
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, institutionFilter, activeFilter])
+
+  // Paginate departments
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedDepartments = filteredDepartments.slice(startIndex, endIndex)
+  const totalPages = Math.ceil(filteredDepartments.length / pageSize)
 
   // Handle deactivate
   const handleDeactivate = async (id: string) => {
@@ -382,7 +398,7 @@ export default function DepartmentsPage() {
 
             {/* Results count */}
             <div className="text-sm text-muted-foreground">
-              Showing {filteredDepartments.length} of {departments?.length || 0} departments
+              Showing {filteredDepartments.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, filteredDepartments.length)} of {filteredDepartments.length} departments
             </div>
 
             {/* Table */}
@@ -458,14 +474,14 @@ export default function DepartmentsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredDepartments.length === 0 ? (
+                    {paginatedDepartments.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="h-24 text-center">
                           No departments found.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredDepartments.map((dept) => (
+                      paginatedDepartments.map((dept) => (
                         <DepartmentRow
                           key={dept.id}
                           department={dept}
@@ -476,6 +492,36 @@ export default function DepartmentsPage() {
                     )}
                   </TableBody>
                 </Table>
+
+                {/* Pagination Controls */}
+                {filteredDepartments.length > 0 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {startIndex + 1}-{Math.min(endIndex, filteredDepartments.length)} of {filteredDepartments.length} departments
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => p - 1)}
+                        disabled={page === 1}
+                      >
+                        Previous
+                      </Button>
+                      <div className="text-sm text-muted-foreground">
+                        Page {page} of {totalPages}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => p + 1)}
+                        disabled={page >= totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

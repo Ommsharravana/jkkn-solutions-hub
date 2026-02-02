@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Card,
@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import {
   Users,
   Hammer,
@@ -112,6 +113,8 @@ function SummaryCard({
 function BuildersTab() {
   const [search, setSearch] = useState('')
   const [activeOnly, setActiveOnly] = useState<string>('all')
+  const [page, setPage] = useState(1)
+  const pageSize = 10
 
   const { data: builders, isLoading } = useQuery({
     queryKey: ['talent', 'builders', search, activeOnly],
@@ -121,6 +124,17 @@ function BuildersTab() {
         is_active: activeOnly === 'active' ? true : activeOnly === 'inactive' ? false : undefined,
       }),
   })
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [search, activeOnly])
+
+  // Paginate builders
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedBuilders = builders ? builders.slice(startIndex, endIndex) : []
+  const totalPages = builders ? Math.ceil(builders.length / pageSize) : 0
 
   if (isLoading) {
     return (
@@ -174,8 +188,8 @@ function BuildersTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {builders && builders.length > 0 ? (
-                builders.map((builder) => (
+              {paginatedBuilders && paginatedBuilders.length > 0 ? (
+                paginatedBuilders.map((builder) => (
                   <TableRow key={builder.id}>
                     <TableCell className="font-medium">{builder.name}</TableCell>
                     <TableCell>
@@ -246,6 +260,36 @@ function BuildersTab() {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination Controls */}
+          {builders && builders.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <p className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{Math.min(endIndex, builders.length)} of {builders.length} builders
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -260,6 +304,8 @@ function CohortTab() {
   const [search, setSearch] = useState('')
   const [level, setLevel] = useState<string>('all')
   const [track, setTrack] = useState<string>('all')
+  const [page, setPage] = useState(1)
+  const pageSize = 10
 
   const { data: members, isLoading } = useQuery({
     queryKey: ['talent', 'cohort', search, level, track],
@@ -271,6 +317,17 @@ function CohortTab() {
         status: 'active',
       }),
   })
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [search, level, track])
+
+  // Paginate members
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedMembers = members ? members.slice(startIndex, endIndex) : []
+  const totalPages = members ? Math.ceil(members.length / pageSize) : 0
 
   if (isLoading) {
     return (
@@ -338,8 +395,8 @@ function CohortTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members && members.length > 0 ? (
-                members.map((member) => {
+              {paginatedMembers && paginatedMembers.length > 0 ? (
+                paginatedMembers.map((member) => {
                   const levelInfo = getLevelInfo(member.level)
                   return (
                     <TableRow key={member.id}>
@@ -388,6 +445,36 @@ function CohortTab() {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination Controls */}
+          {members && members.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <p className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{Math.min(endIndex, members.length)} of {members.length} cohort members
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -402,6 +489,8 @@ function ProductionTab() {
   const [search, setSearch] = useState('')
   const [division, setDivision] = useState<string>('all')
   const [skillLevel, setSkillLevel] = useState<string>('all')
+  const [page, setPage] = useState(1)
+  const pageSize = 10
 
   const { data: learners, isLoading } = useQuery({
     queryKey: ['talent', 'production', search, division, skillLevel],
@@ -413,6 +502,17 @@ function ProductionTab() {
         status: 'active',
       }),
   })
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [search, division, skillLevel])
+
+  // Paginate learners
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedLearners = learners ? learners.slice(startIndex, endIndex) : []
+  const totalPages = learners ? Math.ceil(learners.length / pageSize) : 0
 
   if (isLoading) {
     return (
@@ -484,8 +584,8 @@ function ProductionTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {learners && learners.length > 0 ? (
-                learners.map((learner) => {
+              {paginatedLearners && paginatedLearners.length > 0 ? (
+                paginatedLearners.map((learner) => {
                   const divisionInfo = learner.division
                     ? getDivisionInfo(learner.division)
                     : null
@@ -543,6 +643,36 @@ function ProductionTab() {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination Controls */}
+          {learners && learners.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <p className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{Math.min(endIndex, learners.length)} of {learners.length} production learners
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

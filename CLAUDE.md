@@ -68,6 +68,26 @@ Migrations in `supabase/migrations/` - 11 files covering:
 
 See `.env.example` for required variables.
 
+## Demo Accounts
+
+All accounts use the password: `Demo123!`
+
+| Role | Email | Portal Access |
+|------|-------|---------------|
+| **MD** | md@demo.jkkn.ai | Full access - all dashboards |
+| **HOD** | hod@demo.jkkn.ai | Department management, approvals |
+| **Department Staff** | deptstaff@demo.jkkn.ai | Department view, basic operations |
+| **JICATE Staff** | jicate@demo.jkkn.ai | JICATE software projects |
+| **Builder** | builder@demo.jkkn.ai | Builder portal - assignments, skills |
+| **Cohort Member** | cohort@demo.jkkn.ai | Cohort portal - sessions, earnings |
+| **Production Learner** | production@demo.jkkn.ai | Production portal - content work |
+| **Client** | client@demo.jkkn.ai | Client portal - solutions, invoices |
+
+### Quick Login URLs
+
+- Production: `https://jkkn-solutions-hub.vercel.app/auth/login`
+- Local: `http://localhost:3000/auth/login`
+
 ## Spec Reference
 
 Full specification in `docs/SPEC.md` and `docs/features.json`.

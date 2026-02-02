@@ -1,0 +1,10 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://solutions.jkkn.ai/sitemap.xml
+
+# Disallow admin/internal routes
+Disallow: /api/
+Disallow: /admin/

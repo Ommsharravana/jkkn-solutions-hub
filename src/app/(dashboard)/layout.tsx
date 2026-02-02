@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/shared/sidebar'
 import { Header } from '@/components/shared/header'
+import { SkipNav } from '@/components/skip-nav'
 
 export default async function DashboardLayout({
   children,
@@ -25,14 +26,17 @@ export default async function DashboardLayout({
     .single()
 
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header userProfile={profile} />
-        <main className="flex-1 overflow-y-auto bg-muted/40 p-6">
-          {children}
-        </main>
+    <>
+      <SkipNav />
+      <div className="flex h-screen">
+        <Sidebar />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Header userProfile={profile} />
+          <main id="main-content" className="flex-1 overflow-y-auto bg-muted/40 p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

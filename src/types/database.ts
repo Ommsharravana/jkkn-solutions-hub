@@ -556,6 +556,24 @@ export interface JicateSession {
 }
 
 // ============================================
+// AUDIT LOGS
+// ============================================
+
+export interface AuditLog {
+  id: string;
+  user_id: string;
+  user_email: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  entity_name: string | null;
+  details: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+// ============================================
 // DATABASE TYPE (Supabase format)
 // ============================================
 
@@ -860,6 +878,14 @@ export interface Database {
           attendees?: Array<{ name: string; role?: string }>;
         };
         Update: Partial<Omit<JicateSession, 'id' | 'created_at'>>;
+      };
+      audit_logs: {
+        Row: AuditLog;
+        Insert: Omit<AuditLog, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<AuditLog, 'id' | 'created_at'>>;
       };
     };
   };

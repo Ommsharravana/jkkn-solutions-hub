@@ -39,6 +39,8 @@ const PUBLIC_ROUTES = [
   '/auth/forgot-password',
   '/auth/reset-password',
   '/api/webhooks',
+  '/api/health',
+  '/toast-test', // Public test page for toast notifications
 ]
 
 // Role-based redirect destinations after login
@@ -85,9 +87,26 @@ function getRedirectForRole(role: UserRole): string {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Add CSP header to all responses
+  const addCSPHeaders = (response: NextResponse) => {
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      "frame-ancestors 'self'",
+      "form-action 'self'",
+    ].join('; ')
+
+    response.headers.set('Content-Security-Policy', csp)
+    return response
+  }
+
   // Allow public routes
   if (isPublicRoute(pathname)) {
-    return NextResponse.next()
+    return addCSPHeaders(NextResponse.next())
   }
 
   // Create Supabase client with cookies
@@ -188,7 +207,7 @@ export async function middleware(request: NextRequest) {
   response.headers.set('x-user-role', userRole)
   response.headers.set('x-user-type', profile.user_type)
 
-  return response
+  return addCSPHeaders(response)
 }
 
 export const config = {
