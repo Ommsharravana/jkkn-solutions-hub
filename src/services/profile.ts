@@ -13,9 +13,6 @@ import type {
   Builder,
   CohortMember,
   ProductionLearner,
-  BuilderAssignment,
-  CohortAssignment,
-  ProductionAssignment,
 } from '@/types/database'
 
 // ============================================
@@ -96,6 +93,8 @@ export async function getMyRoles(userId: string): Promise<UserRoles> {
   const supabase = createClient()
 
   // Fetch all three profiles in parallel
+  // Using .maybeSingle() instead of .single() because users may not have all profiles
+  // .single() throws PGRST116 error when no rows found, .maybeSingle() returns null
   const [builderResult, cohortResult, productionResult] = await Promise.all([
     // Builder profile
     supabase
@@ -105,7 +104,7 @@ export async function getMyRoles(userId: string): Promise<UserRoles> {
         department:departments(id, name, code)
       `)
       .eq('user_id', userId)
-      .single(),
+      .maybeSingle(),
 
     // Cohort member profile
     supabase
@@ -115,14 +114,14 @@ export async function getMyRoles(userId: string): Promise<UserRoles> {
         department:departments(id, name, code)
       `)
       .eq('user_id', userId)
-      .single(),
+      .maybeSingle(),
 
     // Production learner profile
     supabase
       .from('production_learners')
       .select('*')
       .eq('user_id', userId)
-      .single(),
+      .maybeSingle(),
   ])
 
   // Process builder profile
@@ -443,7 +442,7 @@ export async function getQuickStats(userId: string): Promise<QuickStats> {
 
   let totalRoles = 0
   let activeWork = 0
-  let completedThisMonth = 0
+  const completedThisMonth = 0
 
   if (roles.isBuilder) {
     totalRoles++
