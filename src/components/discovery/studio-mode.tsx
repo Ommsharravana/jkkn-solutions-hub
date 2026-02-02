@@ -28,19 +28,57 @@ interface StudioModeProps {
 }
 
 const STUDIO_URL = 'https://jkkn-solution-studio.vercel.app'
+const ALLOWED_DOMAINS = ['jkkn-solution-studio.vercel.app', 'lovable.dev']
+
+// Validate URL format and domain
+function isValidStudioUrl(url: string): { valid: boolean; error?: string } {
+  if (!url.trim()) {
+    return { valid: false, error: 'URL is required' }
+  }
+
+  try {
+    const parsedUrl = new URL(url)
+
+    // Only allow https
+    if (parsedUrl.protocol !== 'https:') {
+      return { valid: false, error: 'URL must use HTTPS' }
+    }
+
+    // Check if domain is allowed
+    const isAllowedDomain = ALLOWED_DOMAINS.some(domain =>
+      parsedUrl.hostname === domain || parsedUrl.hostname.endsWith(`.${domain}`)
+    )
+
+    if (!isAllowedDomain) {
+      return { valid: false, error: 'URL must be from Solution Studio or Lovable' }
+    }
+
+    return { valid: true }
+  } catch {
+    return { valid: false, error: 'Invalid URL format' }
+  }
+}
 
 export function StudioMode({ onComplete, onSwitchMode, initialData }: StudioModeProps) {
   const [studioProjectUrl, setStudioProjectUrl] = useState(initialData?.lovableProjectUrl || '')
   const [isLinked, setIsLinked] = useState(false)
+  const [urlError, setUrlError] = useState<string | null>(null)
 
   const handleLinkStudio = () => {
-    if (studioProjectUrl) {
+    const validation = isValidStudioUrl(studioProjectUrl)
+    if (validation.valid) {
       setIsLinked(true)
+      setUrlError(null)
+    } else {
+      setUrlError(validation.error || 'Invalid URL')
+      setIsLinked(false)
     }
   }
 
   const handleComplete = () => {
+    // Pass through any existing initialData fields plus studio-specific data
     onComplete({
+      ...initialData,
       mode: 'studio',
       completedSteps: [1, 2, 3, 4, 5],
       completionPercentage: 62,
@@ -93,7 +131,7 @@ export function StudioMode({ onComplete, onSwitchMode, initialData }: StudioMode
 
           <Button
             className="w-full"
-            onClick={() => window.open(STUDIO_URL, '_blank')}
+            onClick={() => window.open(STUDIO_URL, '_blank', 'noopener,noreferrer')}
           >
             Open Solution Studio
             <ExternalLink className="h-4 w-4 ml-2" />
@@ -141,6 +179,10 @@ export function StudioMode({ onComplete, onSwitchMode, initialData }: StudioMode
               )}
             </Button>
           </div>
+
+          {urlError && (
+            <p className="text-sm text-destructive">{urlError}</p>
+          )}
 
           {isLinked && (
             <Alert>

@@ -110,6 +110,7 @@ export const WORKFLOW_TYPES: { value: WorkflowType; label: string; description: 
 
 /**
  * Get default discovery mode based on user role
+ * Uses exhaustive type checking for type safety
  */
 export function getDefaultDiscoveryMode(role: UserRole): DiscoveryMode {
   switch (role) {
@@ -124,21 +125,44 @@ export function getDefaultDiscoveryMode(role: UserRole): DiscoveryMode {
       return 'guided'
     case 'jicate_staff':
       return 'studio'
-    default:
-      return 'quick'
+    default: {
+      // Exhaustive type checking - this ensures all UserRole cases are handled
+      const _exhaustiveCheck: never = role
+      return 'quick' // Fallback for safety
+    }
   }
 }
 
 /**
- * Calculate discovery completion percentage
+ * Fields required for each mode
+ */
+const MODE_REQUIRED_FIELDS: Record<DiscoveryMode, (keyof DiscoveryData)[]> = {
+  quick: ['problemStatement', 'targetUser', 'howPainful'],
+  guided: [
+    'problemStatement', 'targetUser', 'currentSolution',
+    'whoExperiences', 'whenOccurs', 'howPainful', 'frequency',
+    'willingToPay', 'workflowType',
+  ],
+  studio: ['lovableProjectUrl'],
+}
+
+/**
+ * Calculate discovery completion percentage based on mode
  */
 export function calculateCompletionPercentage(data: Partial<DiscoveryData>): number {
-  const fields = [
-    data.problemStatement,
-    data.targetUser,
-    data.howPainful,
-    data.workflowType,
-  ]
-  const completed = fields.filter(Boolean).length
-  return Math.round((completed / fields.length) * 100)
+  const mode = data.mode || 'quick'
+  const requiredFields = MODE_REQUIRED_FIELDS[mode]
+
+  // If using completedSteps (for guided mode), use that
+  if (mode === 'guided' && data.completedSteps) {
+    return Math.round((data.completedSteps.length / 8) * 100)
+  }
+
+  // Otherwise calculate based on filled fields
+  const filledCount = requiredFields.filter(field => {
+    const value = data[field]
+    return value !== undefined && value !== null && value !== ''
+  }).length
+
+  return Math.round((filledCount / requiredFields.length) * 100)
 }

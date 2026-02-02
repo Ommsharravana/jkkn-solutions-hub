@@ -61,31 +61,33 @@ export function GuidedWizard({ onComplete, onSwitchMode, initialData }: GuidedWi
   const progress = Math.round((completedSteps.length / STEPS.length) * 100)
 
   const handleNext = () => {
-    if (!completedSteps.includes(currentStep)) {
-      setCompletedSteps([...completedSteps, currentStep])
-    }
-    if (currentStep < STEPS.length) {
-      setCurrentStep(currentStep + 1)
-    }
+    // Use functional updates to avoid stale closure issues
+    setCompletedSteps(prev => prev.includes(currentStep) ? prev : [...prev, currentStep])
+    setCurrentStep(prev => Math.min(prev + 1, STEPS.length))
   }
 
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
+    setCurrentStep(prev => Math.max(prev - 1, 1))
   }
 
   const handleSkip = () => {
+    // Skip moves forward without marking as complete
     if (currentStep < STEPS.length) {
-      setCurrentStep(currentStep + 1)
+      setCurrentStep(prev => prev + 1)
     }
   }
 
   const handleComplete = () => {
+    // Include the final step in completedSteps before submitting
+    const finalCompletedSteps = completedSteps.includes(currentStep)
+      ? completedSteps
+      : [...completedSteps, currentStep]
+    const finalProgress = Math.round((finalCompletedSteps.length / STEPS.length) * 100)
+
     onComplete({
       ...formData,
-      completedSteps,
-      completionPercentage: progress,
+      completedSteps: finalCompletedSteps,
+      completionPercentage: finalProgress,
     })
   }
 
@@ -246,7 +248,7 @@ export function GuidedWizard({ onComplete, onSwitchMode, initialData }: GuidedWi
               <div className="space-y-2">
                 <Label>Desperate User Test: Would someone pay for this solution?</Label>
                 <RadioGroup
-                  value={formData.willingToPay ? 'yes' : 'no'}
+                  value={formData.willingToPay === true ? 'yes' : formData.willingToPay === false ? 'no' : ''}
                   onValueChange={(value) => updateField('willingToPay', value === 'yes')}
                 >
                   <div className="flex items-center space-x-2">
@@ -384,8 +386,8 @@ export function GuidedWizard({ onComplete, onSwitchMode, initialData }: GuidedWi
                 <Input
                   type="number"
                   placeholder="Number of users"
-                  value={formData.usersServed || ''}
-                  onChange={(e) => updateField('usersServed', parseInt(e.target.value) || 0)}
+                  value={formData.usersServed ?? ''}
+                  onChange={(e) => updateField('usersServed', e.target.value === '' ? undefined : parseInt(e.target.value))}
                 />
               </div>
               <div className="space-y-2">

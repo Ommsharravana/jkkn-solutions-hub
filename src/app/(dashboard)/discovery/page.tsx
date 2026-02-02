@@ -42,7 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { VisitForm, VisitCard } from '@/components/discovery'
+import { VisitForm } from '@/components/discovery'
 import { useDiscoveryVisits, useCreateDiscoveryVisit, useDeleteDiscoveryVisit } from '@/hooks/use-discovery-visits'
 import { useDepartments } from '@/hooks/use-departments'
 import { useClients } from '@/hooks/use-clients'

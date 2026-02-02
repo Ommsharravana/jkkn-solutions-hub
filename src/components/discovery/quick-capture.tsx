@@ -22,25 +22,48 @@ interface QuickCaptureProps {
   initialData?: Partial<DiscoveryData>
 }
 
+type PainLevel = 'low' | 'medium' | 'high' | 'critical' | ''
+
 export function QuickCapture({ onComplete, onSwitchMode, initialData }: QuickCaptureProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    problemStatement: string
+    targetUser: string
+    howPainful: PainLevel
+  }>({
     problemStatement: initialData?.problemStatement || '',
     targetUser: initialData?.targetUser || '',
     howPainful: initialData?.howPainful || '',
-    notes: '',
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Calculate completion based on filled fields
+  const filledFields = [formData.problemStatement, formData.targetUser, formData.howPainful].filter(Boolean).length
+  const completionPercentage = Math.round((filledFields / 3) * 100)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onComplete({
-      mode: 'quick',
-      completedSteps: [1],
-      completionPercentage: 25,
-      problemStatement: formData.problemStatement,
-      targetUser: formData.targetUser,
-      howPainful: formData.howPainful as DiscoveryData['howPainful'],
-    })
+
+    // Validate howPainful is selected
+    if (!formData.howPainful) {
+      return // Form should not submit without pain level
+    }
+
+    setIsSubmitting(true)
+    try {
+      onComplete({
+        mode: 'quick',
+        completedSteps: [1],
+        completionPercentage,
+        problemStatement: formData.problemStatement,
+        targetUser: formData.targetUser,
+        howPainful: formData.howPainful as DiscoveryData['howPainful'],
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
+
+  const canSubmit = formData.problemStatement && formData.targetUser && formData.howPainful
 
   return (
     <Card>
@@ -78,12 +101,13 @@ export function QuickCapture({ onComplete, onSwitchMode, initialData }: QuickCap
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="howPainful">How painful is this problem?</Label>
+            <Label htmlFor="howPainful">How painful is this problem? <span className="text-destructive">*</span></Label>
             <Select
               value={formData.howPainful}
-              onValueChange={(value) => setFormData({ ...formData, howPainful: value })}
+              onValueChange={(value) => setFormData({ ...formData, howPainful: value as PainLevel })}
+              required
             >
-              <SelectTrigger>
+              <SelectTrigger id="howPainful">
                 <SelectValue placeholder="Select pain level" />
               </SelectTrigger>
               <SelectContent>
@@ -93,6 +117,9 @@ export function QuickCapture({ onComplete, onSwitchMode, initialData }: QuickCap
                 <SelectItem value="critical">Critical - Urgent need</SelectItem>
               </SelectContent>
             </Select>
+            {!formData.howPainful && (
+              <p className="text-xs text-muted-foreground">Please select a pain level</p>
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-4">
@@ -107,8 +134,8 @@ export function QuickCapture({ onComplete, onSwitchMode, initialData }: QuickCap
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
-            <Button type="submit">
-              Save & Continue
+            <Button type="submit" disabled={!canSubmit || isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save & Continue'}
             </Button>
           </div>
         </form>

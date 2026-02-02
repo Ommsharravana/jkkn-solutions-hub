@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Zap, Compass, Sparkles, Check } from 'lucide-react'
+import { Zap, Compass, Sparkles, Check, ArrowLeft } from 'lucide-react'
 import { QuickCapture } from './quick-capture'
 import { GuidedWizard } from './guided-wizard'
 import { StudioMode } from './studio-mode'
@@ -59,35 +60,76 @@ export function DiscoveryModeSelector({
   const defaultMode = getDefaultDiscoveryMode(userRole)
   const [selectedMode, setSelectedMode] = useState<DiscoveryMode | null>(null)
   const [activeMode, setActiveMode] = useState<DiscoveryMode | null>(initialData?.mode || null)
+  // Store accumulated data when switching modes to prevent data loss
+  const [accumulatedData, setAccumulatedData] = useState<Partial<DiscoveryData>>(initialData || {})
+
+  // Handle mode switch while preserving data
+  const handleSwitchMode = useCallback((newMode: DiscoveryMode | null) => {
+    setActiveMode(newMode)
+  }, [])
+
+  // Handle going back to mode selection
+  const handleBackToSelection = useCallback(() => {
+    setActiveMode(null)
+    setSelectedMode(null)
+  }, [])
+
+  // Wrapper for onComplete that also stores accumulated data
+  const handleComplete = useCallback((data: Partial<DiscoveryData>) => {
+    const merged = { ...accumulatedData, ...data }
+    setAccumulatedData(merged)
+    onComplete(merged)
+  }, [accumulatedData, onComplete])
+
+  // Merge initialData with accumulated data for child components
+  const childInitialData = { ...initialData, ...accumulatedData }
 
   // If we have an active mode, show that component
   if (activeMode === 'quick') {
     return (
-      <QuickCapture
-        onComplete={onComplete}
-        onSwitchMode={(mode) => setActiveMode(mode)}
-        initialData={initialData}
-      />
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" onClick={handleBackToSelection}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to mode selection
+        </Button>
+        <QuickCapture
+          onComplete={handleComplete}
+          onSwitchMode={handleSwitchMode}
+          initialData={childInitialData}
+        />
+      </div>
     )
   }
 
   if (activeMode === 'guided') {
     return (
-      <GuidedWizard
-        onComplete={onComplete}
-        onSwitchMode={(mode) => setActiveMode(mode)}
-        initialData={initialData}
-      />
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" onClick={handleBackToSelection}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to mode selection
+        </Button>
+        <GuidedWizard
+          onComplete={handleComplete}
+          onSwitchMode={handleSwitchMode}
+          initialData={childInitialData}
+        />
+      </div>
     )
   }
 
   if (activeMode === 'studio') {
     return (
-      <StudioMode
-        onComplete={onComplete}
-        onSwitchMode={(mode) => setActiveMode(mode)}
-        initialData={initialData}
-      />
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" onClick={handleBackToSelection}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to mode selection
+        </Button>
+        <StudioMode
+          onComplete={handleComplete}
+          onSwitchMode={handleSwitchMode}
+          initialData={childInitialData}
+        />
+      </div>
     )
   }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -77,9 +77,12 @@ interface SolutionFormProps {
   initialTargetUser?: string
 }
 
-export function SolutionForm({ initialProblemStatement, initialTargetUser }: SolutionFormProps = {}) {
+export function SolutionForm({
+  initialProblemStatement = '',
+  initialTargetUser = '',
+}: SolutionFormProps) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const createSolution = useCreateSolution()
   const [currentStep, setCurrentStep] = useState(1)
 
@@ -89,7 +92,7 @@ export function SolutionForm({ initialProblemStatement, initialTargetUser }: Sol
       solution_type: undefined,
       client_id: '',
       title: '',
-      problem_statement: initialProblemStatement || '',
+      problem_statement: initialProblemStatement,
       description: initialTargetUser ? `Target users: ${initialTargetUser}` : '',
       lead_department_id: '',
       base_price: undefined,
@@ -98,6 +101,20 @@ export function SolutionForm({ initialProblemStatement, initialTargetUser }: Sol
       target_completion: undefined,
     },
   })
+
+  // Update form values when props change (makes initial values reactive)
+  useEffect(() => {
+    if (initialProblemStatement) {
+      form.setValue('problem_statement', initialProblemStatement)
+    }
+    if (initialTargetUser) {
+      const currentDesc = form.getValues('description')
+      // Only update if not already modified by user
+      if (!currentDesc || currentDesc.startsWith('Target users:')) {
+        form.setValue('description', `Target users: ${initialTargetUser}`)
+      }
+    }
+  }, [initialProblemStatement, initialTargetUser, form])
 
   const solutionType = form.watch('solution_type')
   const clientId = form.watch('client_id')

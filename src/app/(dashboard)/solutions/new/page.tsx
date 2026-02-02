@@ -3,23 +3,45 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { SolutionForm } from '@/components/solutions'
 import { DiscoveryModeSelector } from '@/components/discovery'
 import { useAuth } from '@/hooks/use-auth'
 import { ArrowLeft, Sparkles, SkipForward } from 'lucide-react'
 import type { DiscoveryData } from '@/components/discovery/types'
+import type { UserRole } from '@/types/auth'
 
 export default function NewSolutionPage() {
-  const { user } = useAuth()
+  const { user, loading, initialized } = useAuth()
   const [discoveryData, setDiscoveryData] = useState<Partial<DiscoveryData> | null>(null)
+  const [savedDiscoveryData, setSavedDiscoveryData] = useState<Partial<DiscoveryData> | null>(null)
   const [skipDiscovery, setSkipDiscovery] = useState(false)
 
   const handleDiscoveryComplete = (data: Partial<DiscoveryData>) => {
     setDiscoveryData(data)
+    setSavedDiscoveryData(data) // Save for potential edit
+  }
+
+  // Show loading state while auth is initializing
+  if (!initialized || loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-10 rounded" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+        </div>
+        <Skeleton className="h-96 w-full max-w-4xl mx-auto" />
+      </div>
+    )
   }
 
   // Show discovery first unless skipped
   const showDiscovery = !discoveryData && !skipDiscovery
+  // Safe fallback for role - ensure it's a valid UserRole
+  const userRole: UserRole = user?.role || 'client'
 
   return (
     <div className="space-y-6">
@@ -52,9 +74,9 @@ export default function NewSolutionPage() {
       {showDiscovery ? (
         <div className="max-w-4xl mx-auto">
           <DiscoveryModeSelector
-            userRole={user?.role || 'client'}
+            userRole={userRole}
             onComplete={handleDiscoveryComplete}
-            initialData={discoveryData || undefined}
+            initialData={savedDiscoveryData || undefined}
           />
         </div>
       ) : (
@@ -76,6 +98,8 @@ export default function NewSolutionPage() {
                   size="sm"
                   className="ml-auto"
                   onClick={() => {
+                    // Preserve discovery data for editing
+                    setSavedDiscoveryData(discoveryData)
                     setDiscoveryData(null)
                     setSkipDiscovery(false)
                   }}
