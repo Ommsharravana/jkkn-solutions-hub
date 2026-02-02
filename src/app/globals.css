@@ -1,4 +1,6 @@
-@import "tailwindcss/tailwind.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --radius: 0.625rem;
@@ -70,9 +72,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
   body {
     @apply bg-background text-foreground;
   }
