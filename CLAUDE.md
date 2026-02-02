@@ -70,18 +70,18 @@ See `.env.example` for required variables.
 
 ## Demo Accounts
 
-All accounts use the password: `Demo123!`
+All accounts use the password: `Demo@JKKN2026`
 
-| Role | Email | Portal Access |
-|------|-------|---------------|
-| **MD** | md@demo.jkkn.ai | Full access - all dashboards |
-| **HOD** | hod@demo.jkkn.ai | Department management, approvals |
-| **Department Staff** | deptstaff@demo.jkkn.ai | Department view, basic operations |
-| **JICATE Staff** | jicate@demo.jkkn.ai | JICATE software projects |
-| **Builder** | builder@demo.jkkn.ai | Builder portal - assignments, skills |
-| **Cohort Member** | cohort@demo.jkkn.ai | Cohort portal - sessions, earnings |
-| **Production Learner** | production@demo.jkkn.ai | Production portal - content work |
-| **Client** | client@demo.jkkn.ai | Client portal - solutions, invoices |
+| Role | Email | Portal |
+|------|-------|--------|
+| **MD/CAIO** | demo.md@jkkn.ac.in | / (Admin Dashboard) |
+| **HOD** | demo.hod@jkkn.ac.in | / (Admin Dashboard) |
+| **Dept Staff** | demo.staff@jkkn.ac.in | / (Admin Dashboard) |
+| **JICATE** | demo.jicate@jkkn.ac.in | / (Admin Dashboard) |
+| **Builder** | demo.builder@jkkn.ac.in | /builder |
+| **Cohort** | demo.cohort@jkkn.ac.in | /cohort |
+| **Production** | demo.production@jkkn.ac.in | /production |
+| **Client** | demo.client@example.com | /portal |
 
 ### Quick Login URLs
 
