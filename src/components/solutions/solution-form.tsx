@@ -72,7 +72,12 @@ const steps = [
   { id: 4, name: 'Review', description: 'Review and create' },
 ]
 
-export function SolutionForm() {
+interface SolutionFormProps {
+  initialProblemStatement?: string
+  initialTargetUser?: string
+}
+
+export function SolutionForm({ initialProblemStatement, initialTargetUser }: SolutionFormProps = {}) {
   const router = useRouter()
   const { user } = useAuth()
   const createSolution = useCreateSolution()
@@ -84,8 +89,8 @@ export function SolutionForm() {
       solution_type: undefined,
       client_id: '',
       title: '',
-      problem_statement: '',
-      description: '',
+      problem_statement: initialProblemStatement || '',
+      description: initialTargetUser ? `Target users: ${initialTargetUser}` : '',
       lead_department_id: '',
       base_price: undefined,
       hod_discount: 0,
