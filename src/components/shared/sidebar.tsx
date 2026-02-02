@@ -22,6 +22,17 @@ import {
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/use-auth'
+import type { UserRole } from '@/types/auth'
+
+interface UserProfile {
+  id: string
+  email: string
+  full_name: string | null
+  avatar_url: string | null
+  role: UserRole
+  user_type: string
+  department_id: string | null
+}
 
 // Navigation items based on user roles
 const navigation = [
@@ -46,10 +57,22 @@ const bottomNavigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  userProfile?: UserProfile | null
+}
+
+export function Sidebar({ userProfile }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, signOut } = useAuth()
+  const { user: authUser, signOut } = useAuth()
+
+  // Use server-provided profile when available, fall back to client-side auth
+  const user = userProfile ? {
+    role: userProfile.role,
+    email: userProfile.email,
+    fullName: userProfile.full_name,
+    departmentId: userProfile.department_id,
+  } : authUser
 
   const handleSignOut = async () => {
     await signOut()

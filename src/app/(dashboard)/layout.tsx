@@ -29,7 +29,7 @@ export default async function DashboardLayout({
     <>
       <SkipNav />
       <div className="flex h-screen">
-        <Sidebar />
+        <Sidebar userProfile={profile} />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header userProfile={profile} />
           <main id="main-content" className="flex-1 overflow-y-auto bg-muted/40 p-6">

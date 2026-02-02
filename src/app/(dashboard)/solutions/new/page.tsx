@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,14 +16,27 @@ export default function NewSolutionPage() {
   const [discoveryData, setDiscoveryData] = useState<Partial<DiscoveryData> | null>(null)
   const [savedDiscoveryData, setSavedDiscoveryData] = useState<Partial<DiscoveryData> | null>(null)
   const [skipDiscovery, setSkipDiscovery] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   const handleDiscoveryComplete = (data: Partial<DiscoveryData>) => {
     setDiscoveryData(data)
     setSavedDiscoveryData(data) // Save for potential edit
   }
 
-  // Show loading state only while initially loading (not during subsequent auth checks)
-  if (!initialized) {
+  // Show loading state only briefly - the server-side layout already validates auth
+  // Set ready after a short timeout if auth hook doesn't initialize
+  React.useEffect(() => {
+    if (initialized) {
+      setIsReady(true)
+    } else {
+      // Fallback: if auth doesn't initialize within 2s, show the page anyway
+      // Server-side layout has already validated the user is authenticated
+      const timer = setTimeout(() => setIsReady(true), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [initialized])
+
+  if (!isReady) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
