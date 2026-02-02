@@ -22,8 +22,8 @@ export default function NewSolutionPage() {
     setSavedDiscoveryData(data) // Save for potential edit
   }
 
-  // Show loading state while auth is initializing
-  if (!initialized || loading) {
+  // Show loading state only while initially loading (not during subsequent auth checks)
+  if (!initialized) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
