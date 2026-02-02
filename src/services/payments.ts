@@ -10,7 +10,7 @@ import type {
   Client,
   EarningsLedger,
 } from '@/types/database'
-import { calculateRevenueSplits, type SplitType } from './revenue-splits'
+import { calculateRevenueSplits, calculateAndDistributeSplits, type SplitType } from './revenue-splits'
 
 // Extended payment type with relations
 export interface PaymentWithDetails extends Payment {
@@ -257,24 +257,9 @@ export async function createPayment(input: CreatePaymentInput): Promise<Payment>
 
   if (error) throw error
 
-  // Calculate and create earnings splits if payment is received and splits requested
-  if (
-    input.calculate_splits &&
-    input.status === 'received' &&
-    splitType
-  ) {
-    await calculateAndCreateEarnings(
-      payment.id,
-      input.amount,
-      splitType,
-      input.hod_discount
-    )
-
-    // Mark splits as calculated
-    await supabase
-      .from('payments')
-      .update({ split_calculated: true })
-      .eq('id', payment.id)
+  // Auto-calculate and create earnings splits if payment is received
+  if (input.status === 'received') {
+    await calculateAndDistributeSplits(payment.id)
   }
 
   return payment
@@ -284,8 +269,15 @@ export async function createPayment(input: CreatePaymentInput): Promise<Payment>
 export async function updatePayment(
   id: string,
   input: UpdatePaymentInput
-): Promise<Payment> {
+): Promise<Payment & { splits_result?: { success: boolean; error?: string } }> {
   const supabase = createClient()
+
+  // Get current payment to check if status is changing to 'received'
+  const { data: currentPayment } = await supabase
+    .from('payments')
+    .select('status, split_calculated')
+    .eq('id', id)
+    .single()
 
   const { data, error } = await supabase
     .from('payments')
@@ -298,6 +290,23 @@ export async function updatePayment(
     .single()
 
   if (error) throw error
+
+  // Auto-calculate splits when status changes to 'received'
+  if (
+    input.status === 'received' &&
+    currentPayment?.status !== 'received' &&
+    !currentPayment?.split_calculated
+  ) {
+    const splitResult = await calculateAndDistributeSplits(id)
+    return {
+      ...data,
+      splits_result: {
+        success: splitResult.success,
+        error: splitResult.error,
+      },
+    }
+  }
+
   return data
 }
 
@@ -313,131 +322,12 @@ export async function deletePayment(id: string): Promise<void> {
   if (error) throw error
 }
 
-// Helper to safely extract nested data from Supabase joins (handles both object and array results)
-function extractNestedData<T>(data: T | T[] | null | undefined): T | undefined {
-  if (data === null || data === undefined) return undefined
-  return Array.isArray(data) ? data[0] : data
-}
-
-// Calculate and create earnings entries for a payment
-async function calculateAndCreateEarnings(
-  paymentId: string,
-  amount: number,
-  splitType: SplitType,
-  hodDiscount?: number
-): Promise<void> {
-  const supabase = createClient()
-
-  // Check for referral (for software first phase)
-  let hasReferral = false
-  let isFirstPhase = false
-
-  if (splitType === 'software') {
-    const { data: payment } = await supabase
-      .from('payments')
-      .select(`
-        phase:solution_phases(
-          phase_number,
-          solution:solutions(
-            client:clients(
-              id
-            )
-          )
-        )
-      `)
-      .eq('id', paymentId)
-      .single()
-
-    if (payment?.phase) {
-      // Safely extract nested data from Supabase joins
-      const phaseData = extractNestedData(payment.phase as { phase_number: number; solution?: unknown } | { phase_number: number; solution?: unknown }[] | null)
-      isFirstPhase = phaseData?.phase_number === 1
-
-      if (phaseData?.solution) {
-        const solutionData = extractNestedData(phaseData.solution as { client?: unknown } | { client?: unknown }[] | null)
-        if (solutionData?.client) {
-          const clientData = extractNestedData(solutionData.client as { id: string } | { id: string }[] | null)
-
-          if (isFirstPhase && clientData?.id) {
-            const { data: referral } = await supabase
-              .from('client_referrals')
-              .select('id')
-              .eq('client_id', clientData.id)
-              .single()
-
-            hasReferral = !!referral
-          }
-        }
-      }
-    }
-  }
-
-  // Calculate splits
-  const result = calculateRevenueSplits(amount, splitType, {
-    hodDiscount,
-    isFirstPhase,
-    hasReferral,
-  })
-
-  // Create earnings entries
-  const earningsEntries = result.splits.map((split) => ({
-    payment_id: paymentId,
-    recipient_type: split.recipientType,
-    recipient_name: split.recipientName,
-    amount: split.amount,
-    percentage: split.percentage,
-    status: 'calculated' as const,
-  }))
-
-  const { error } = await supabase.from('earnings_ledger').insert(earningsEntries)
-
-  if (error) throw error
-}
-
 // Process splits for existing received payments that haven't been calculated
+// Uses the new unified calculateAndDistributeSplits from revenue-splits.ts
 export async function processUnprocessedPayments(): Promise<number> {
-  const supabase = createClient()
-
-  const { data: payments, error } = await supabase
-    .from('payments')
-    .select('*')
-    .eq('status', 'received')
-    .eq('split_calculated', false)
-
-  if (error) throw error
-
-  let processedCount = 0
-
-  for (const payment of payments || []) {
-    let splitType: SplitType | null = null
-
-    if (payment.phase_id) {
-      splitType = 'software'
-    } else if (payment.program_id) {
-      const { data: program } = await supabase
-        .from('training_programs')
-        .select('track')
-        .eq('id', payment.program_id)
-        .single()
-
-      splitType = program?.track === 'track_a' ? 'training_track_a' : 'training_track_b'
-    } else if (payment.order_id) {
-      splitType = 'content'
-    }
-
-    if (splitType) {
-      await calculateAndCreateEarnings(payment.id, payment.amount, splitType)
-
-      await supabase
-        .from('payments')
-        .update({ split_calculated: true })
-        .eq('id', payment.id)
-
-      processedCount++
-    }
-  }
-
-  return processedCount
+  const { processAllPendingSplits } = await import('./revenue-splits')
+  const result = await processAllPendingSplits()
+  return result.processed
 }
 
 // Get monthly batch summary

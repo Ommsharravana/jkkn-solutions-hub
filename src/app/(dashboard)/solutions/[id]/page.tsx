@@ -26,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { SolutionStatusBadge } from '@/components/solutions'
+import { SolutionStatusBadge, MouStatusBadge } from '@/components/solutions'
 import { SessionCard } from '@/components/training'
 import { PhaseCard } from '@/components/software'
 import { ContentDeliverablesTab } from '@/components/content'
@@ -37,6 +37,7 @@ import {
   useCreateTrainingSession,
 } from '@/hooks/use-training'
 import { useSolutionPhases, useNextPhaseNumber, useCreatePhase } from '@/hooks/use-phases'
+import { useMouBySolution } from '@/hooks/use-mous'
 import { useAuth } from '@/hooks/use-auth'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -60,6 +61,8 @@ import {
   Clock,
   Award,
   GitBranch,
+  ScrollText,
+  AlertTriangle,
 } from 'lucide-react'
 import { PublicationForm, PublicationCard } from '@/components/accreditation'
 import { usePublications } from '@/hooks/use-publications'
@@ -392,6 +395,9 @@ export default function SolutionDetailPage({ params }: PageProps) {
                 <p className="text-xs text-muted-foreground">Received</p>
               </CardContent>
             </Card>
+
+            {/* MoU Card */}
+            <MouQuickCard solutionId={solution.id} />
 
             {solution.intent_prd_id && (
               <Card>
@@ -739,5 +745,66 @@ function PublicationsTab({ solutionId }: { solutionId: string }) {
         </CardContent>
       </Card>
     </TabsContent>
+  )
+}
+
+// MoU Quick Card Component
+function MouQuickCard({ solutionId }: { solutionId: string }) {
+  const { data: mou, isLoading } = useMouBySolution(solutionId)
+
+  if (isLoading) {
+    return <Skeleton className="h-[100px]" />
+  }
+
+  // Calculate days until expiry
+  const getDaysUntilExpiry = (expiryDate: string | null): number | null => {
+    if (!expiryDate) return null
+    const expiry = new Date(expiryDate)
+    const today = new Date()
+    const diffTime = expiry.getTime() - today.getTime()
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  }
+
+  const daysUntilExpiry = mou ? getDaysUntilExpiry(mou.expiry_date) : null
+  const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry > 0 && daysUntilExpiry <= 30
+
+  return (
+    <Card className={isExpiringSoon ? 'border-amber-300' : ''}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">MoU</CardTitle>
+        {isExpiringSoon ? (
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+        ) : (
+          <ScrollText className="h-4 w-4 text-muted-foreground" />
+        )}
+      </CardHeader>
+      <CardContent>
+        {mou ? (
+          <>
+            <div className="flex items-center gap-2">
+              <MouStatusBadge status={mou.status} />
+            </div>
+            {isExpiringSoon && (
+              <p className="text-xs text-amber-600 mt-1">
+                Expires in {daysUntilExpiry} days
+              </p>
+            )}
+            <Button variant="outline" size="sm" className="w-full mt-2" asChild>
+              <Link href={`/solutions/${solutionId}/mou`}>View MoU</Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground mb-2">No MoU created</p>
+            <Button variant="outline" size="sm" className="w-full" asChild>
+              <Link href={`/solutions/${solutionId}/mou`}>
+                <Plus className="h-3 w-3 mr-1" />
+                Create MoU
+              </Link>
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
   )
 }

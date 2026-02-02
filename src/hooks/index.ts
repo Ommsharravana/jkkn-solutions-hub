@@ -18,6 +18,9 @@ export * from './use-content-orders'
 export * from './use-content-deliverables'
 export * from './use-production-learners'
 export * from './use-phases'
+export * from './use-mous'
+export * from './use-department-dashboard'
+export * from './use-cohort-portal'
 export {
   useBuilders,
   useBuilder,

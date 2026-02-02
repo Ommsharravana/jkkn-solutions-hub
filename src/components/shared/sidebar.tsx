@@ -24,11 +24,13 @@ import { useAuth } from '@/hooks/use-auth'
 // Navigation items based on user roles
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['all'] },
+  { name: 'My Department', href: '/department', icon: Building2, roles: ['department_head', 'department_staff'] },
   { name: 'Clients', href: '/clients', icon: Users, roles: ['md_caio', 'department_head', 'department_staff', 'jicate_staff'] },
   { name: 'Solutions', href: '/solutions', icon: Briefcase, roles: ['md_caio', 'department_head', 'department_staff', 'jicate_staff', 'builder', 'cohort_member', 'production_learner', 'client'] },
   { name: 'Software', href: '/software', icon: Hammer, roles: ['md_caio', 'jicate_staff', 'builder'] },
   { name: 'Training', href: '/training', icon: BookOpen, roles: ['md_caio', 'jicate_staff', 'cohort_member', 'department_head'] },
-  { name: 'Content', href: '/content', icon: Video, roles: ['md_caio', 'jicate_staff', 'production_learner'] },
+  { name: 'Content', href: '/content', icon: Video, roles: ['md_caio', 'jicate_staff'] },
+  { name: 'Production Portal', href: '/production', icon: Video, roles: ['production_learner'] },
   { name: 'Departments', href: '/departments', icon: Building2, roles: ['md_caio', 'jicate_staff'] },
   { name: 'Talent', href: '/talent', icon: GraduationCap, roles: ['md_caio', 'department_head', 'jicate_staff'] },
   { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['md_caio', 'department_head', 'jicate_staff'] },

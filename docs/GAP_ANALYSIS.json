@@ -1,0 +1,346 @@
+{
+  "project": "JKKN Solutions Hub",
+  "audit_date": "2026-02-02",
+  "spec_version": "1.1",
+  "gaps": [
+    {
+      "module": "Authentication",
+      "feature": "MyJKKN OAuth Integration (F001)",
+      "severity": "CRITICAL",
+      "spec_requirement": "Internal users authenticate via MyJKKN OAuth (Google Sign-in) with role-based redirects",
+      "current_state": "Google OAuth button exists but MyJKKN OAuth integration not configured. No role-based access control implemented.",
+      "action_needed": "Configure MyJKKN OAuth provider in Supabase, implement role detection on login, add role-based route guards",
+      "files_affected": [
+        "src/app/auth/login/page.tsx",
+        "src/hooks/use-auth.ts",
+        "src/lib/supabase/server.ts",
+        "src/middleware.ts (MISSING)"
+      ]
+    },
+    {
+      "module": "Client Portal",
+      "feature": "External Client Self-Service Portal (F010, F011, F012)",
+      "severity": "CRITICAL",
+      "spec_requirement": "External clients can view their solutions, track progress, approve deliverables, download files, view invoices, and start new solutions via Intent",
+      "current_state": "NO CLIENT PORTAL EXISTS. Only internal dashboard exists. External clients have no self-service interface.",
+      "action_needed": "Build entire client portal at /portal/* with: my solutions, progress tracking, deliverable approval, file downloads, invoice view, Intent launch",
+      "files_affected": [
+        "src/app/portal/ (MISSING - entire route group)",
+        "src/app/portal/solutions/page.tsx (MISSING)",
+        "src/app/portal/deliverables/page.tsx (MISSING)",
+        "src/app/portal/invoices/page.tsx (MISSING)"
+      ]
+    },
+    {
+      "module": "Master Dashboard",
+      "feature": "MD/CAIO Master Dashboard (F016)",
+      "severity": "HIGH",
+      "spec_requirement": "MD sees: Revenue this month by solution type (pie), active solutions, department leaderboard, today's sessions, pending deliverables, partner pipeline, NIRF metrics",
+      "current_state": "Dashboard shows STATIC placeholder stats ('Total Users: 2,350', etc.) - no real data. Missing MD-specific widgets.",
+      "action_needed": "Build real MD dashboard with: revenue by type chart, department leaderboard, pending items, NIRF summary, today's sessions",
+      "files_affected": [
+        "src/app/(dashboard)/page.tsx",
+        "src/services/dashboard.ts (MISSING)",
+        "src/hooks/use-dashboard.ts (MISSING)"
+      ]
+    },
+    {
+      "module": "Department Dashboard",
+      "feature": "HOD Department Dashboard (F017)",
+      "severity": "HIGH",
+      "spec_requirement": "HOD sees: My clients, my revenue share (40%), active phases I own, my cohort members, leaderboard position",
+      "current_state": "No department-specific dashboard exists. No role-based dashboard routing.",
+      "action_needed": "Build department dashboard with: department clients, revenue share view, owned phases, cohort members, ranking",
+      "files_affected": [
+        "src/app/(dashboard)/department/page.tsx (MISSING)",
+        "src/services/department-dashboard.ts (MISSING)"
+      ]
+    },
+    {
+      "module": "Builder Portal",
+      "feature": "Builder Self-Service Portal (F018)",
+      "severity": "HIGH",
+      "spec_requirement": "Builders see: My assignments, available phases to request, skills with proficiency, total earnings breakdown",
+      "current_state": "Builders page exists (/software/builders) for ADMIN view. No self-service portal for builders themselves.",
+      "action_needed": "Build builder portal at /my/builder/* with: my assignments, request phases, skill management, earnings view",
+      "files_affected": [
+        "src/app/(dashboard)/my/builder/page.tsx (MISSING)",
+        "src/app/(dashboard)/my/builder/assignments/page.tsx (MISSING)",
+        "src/app/(dashboard)/my/builder/skills/page.tsx (MISSING)",
+        "src/app/(dashboard)/my/builder/earnings/page.tsx (MISSING)"
+      ]
+    },
+    {
+      "module": "Cohort Member Portal",
+      "feature": "Cohort Member Self-Service Portal (F019)",
+      "severity": "HIGH",
+      "spec_requirement": "Cohort members see: Current level (0-3), sessions observed/co-led/led, available sessions to claim, my schedule, earnings, level-up application",
+      "current_state": "Cohort page exists (/training/cohort) for ADMIN view. No self-service portal for members themselves.",
+      "action_needed": "Build cohort portal at /my/cohort/* with: level progress, session claiming, schedule, earnings, level-up request",
+      "files_affected": [
+        "src/app/(dashboard)/my/cohort/page.tsx (MISSING)",
+        "src/app/(dashboard)/my/cohort/schedule/page.tsx (MISSING)",
+        "src/app/(dashboard)/my/cohort/earnings/page.tsx (MISSING)"
+      ]
+    },
+    {
+      "module": "Production Learner Portal",
+      "feature": "Production Learner Self-Service Portal (F020)",
+      "severity": "HIGH",
+      "spec_requirement": "Production learners see: Division queue, claim deliverables, upload work, completion count, earnings, ratings",
+      "current_state": "Production page exists (/content/production) for ADMIN view. No self-service portal for learners themselves.",
+      "action_needed": "Build learner portal at /my/production/* with: division queue, claim UI, upload, earnings, ratings",
+      "files_affected": [
+        "src/app/(dashboard)/my/production/page.tsx (MISSING)",
+        "src/app/(dashboard)/my/production/queue/page.tsx (MISSING)",
+        "src/app/(dashboard)/my/production/earnings/page.tsx (MISSING)"
+      ]
+    },
+    {
+      "module": "MoU Management",
+      "feature": "MoU Tracking for Software Solutions (F029)",
+      "severity": "HIGH",
+      "spec_requirement": "Track MoUs with: deal_value, payment_terms, status lifecycle (draft/sent/signed/active/expired), document upload, dates",
+      "current_state": "solution_mous table exists in migrations but NO UI or service for MoU management. Referenced in database schema only.",
+      "action_needed": "Build MoU management: create/edit MoU for solutions, status workflow, document upload, payment terms display",
+      "files_affected": [
+        "src/services/mous.ts (MISSING)",
+        "src/hooks/use-mous.ts (MISSING)",
+        "src/components/software/mou-form.tsx (MISSING)",
+        "src/components/software/mou-card.tsx (MISSING)"
+      ]
+    },
+    {
+      "module": "Payments",
+      "feature": "Payment Recording with Auto Split (F013)",
+      "severity": "HIGH",
+      "spec_requirement": "Record payments linked to phase/program/order. Auto-calculate revenue splits based on solution type. Generate earnings_ledger entries.",
+      "current_state": "Payment recording page exists (/payments/new) but auto-split calculation NOT implemented. Split display component exists but calculation is manual.",
+      "action_needed": "Implement auto-split calculation trigger on payment creation. Use revenue_split_models table to auto-generate earnings_ledger entries.",
+      "files_affected": [
+        "src/services/payments.ts",
+        "src/services/revenue-splits.ts",
+        "src/components/financials/payment-form.tsx"
+      ]
+    },
+    {
+      "module": "Payments",
+      "feature": "Monthly Batch Processing (F014)",
+      "severity": "MEDIUM",
+      "spec_requirement": "Aggregate pending payouts monthly. MD visibility with flag capability. Auto-process after 48 hours unless flagged.",
+      "current_state": "BatchProcessor component exists but auto-processing after 48 hours NOT implemented. Flag system partial.",
+      "action_needed": "Implement 48-hour auto-processing logic, add flag/unflag workflow, add batch approval flow",
+      "files_affected": [
+        "src/components/financials/batch-processor.tsx",
+        "src/services/batch-processing.ts (MISSING)",
+        "src/app/api/cron/batch-process/route.ts (MISSING)"
+      ]
+    },
+    {
+      "module": "HOD Discount",
+      "feature": "HOD 10% Discount from Department Share (F015)",
+      "severity": "MEDIUM",
+      "spec_requirement": "HOD can give up to 10% discount. System shows this reduces their 40% share. > 10% escalates to MD.",
+      "current_state": "Partner discount (50%) implemented. HOD discount logic NOT implemented. No UI for HOD to apply discount.",
+      "action_needed": "Add HOD discount field to solution creation. Show impact on department share. Add escalation for > 10%.",
+      "files_affected": [
+        "src/components/solutions/solution-form.tsx",
+        "src/services/solutions.ts",
+        "src/services/revenue-splits.ts"
+      ]
+    },
+    {
+      "module": "Multi-Role User",
+      "feature": "User in Multiple Talent Pools (F021)",
+      "severity": "MEDIUM",
+      "spec_requirement": "One person can be builder + cohort member + production learner. Track earnings separately, show unified view.",
+      "current_state": "Each talent pool table has separate user_id. No unified profile view or role switching implemented.",
+      "action_needed": "Build unified profile page showing all roles, aggregate earnings across roles, add role switcher",
+      "files_affected": [
+        "src/app/(dashboard)/my/profile/page.tsx (MISSING)",
+        "src/services/unified-profile.ts (MISSING)"
+      ]
+    },
+    {
+      "module": "Discovery",
+      "feature": "Discovery Visits CRUD (F022)",
+      "severity": "MEDIUM",
+      "spec_requirement": "Log site visits with: date, visitors, observations, pain points, photos, link to solutions",
+      "current_state": "VisitList and VisitForm components exist. Discovery visits tab on client detail page works. BUT no standalone discovery page.",
+      "action_needed": "Add standalone /discovery page to view all visits. Improve photo upload handling.",
+      "files_affected": [
+        "src/app/(dashboard)/discovery/page.tsx (MISSING)",
+        "src/components/discovery/visit-form.tsx"
+      ]
+    },
+    {
+      "module": "NIRF/NAAC",
+      "feature": "NIRF Report Export (F024)",
+      "severity": "MEDIUM",
+      "spec_requirement": "Generate NIRF metrics report. Export as PDF or Excel.",
+      "current_state": "NIRFDashboard component shows metrics. Export functionality NOT implemented.",
+      "action_needed": "Add PDF/Excel export for NIRF report. Add date range selector.",
+      "files_affected": [
+        "src/components/accreditation/nirf-dashboard.tsx",
+        "src/services/accreditation-export.ts (MISSING)"
+      ]
+    },
+    {
+      "module": "NIRF/NAAC",
+      "feature": "NAAC Report Export (F025)",
+      "severity": "MEDIUM",
+      "spec_requirement": "Generate NAAC criteria report with consultancy revenue under C3. Export as PDF or Excel.",
+      "current_state": "NAACDashboard component shows criteria. Export functionality NOT implemented.",
+      "action_needed": "Add PDF/Excel export for NAAC report. Include consultancy revenue calculation.",
+      "files_affected": [
+        "src/components/accreditation/naac-dashboard.tsx",
+        "src/services/accreditation-export.ts (MISSING)"
+      ]
+    },
+    {
+      "module": "Integration",
+      "feature": "Intent Platform Webhook Complete Flow (F026)",
+      "severity": "MEDIUM",
+      "spec_requirement": "Webhook receives interview_complete, creates client + solution, links intent_session_id, applies partner discount",
+      "current_state": "Webhook route EXISTS and is well-implemented. Need to verify end-to-end testing with Intent Platform.",
+      "action_needed": "Integration test with Intent Platform. Verify client creation, solution creation, partner detection.",
+      "files_affected": [
+        "src/app/api/webhooks/intent/route.ts",
+        "src/services/intent-integration.ts"
+      ]
+    },
+    {
+      "module": "Revisions",
+      "feature": "Excessive Revision Flagging (F027)",
+      "severity": "LOW",
+      "spec_requirement": "Flag deliverables with revision_count > 3 to MD dashboard. MD can intervene.",
+      "current_state": "revision_count field exists on deliverables. Flagging logic NOT implemented.",
+      "action_needed": "Add flagging query for high-revision deliverables. Show in MD dashboard.",
+      "files_affected": [
+        "src/services/content-deliverables.ts",
+        "src/components/content/deliverable-card.tsx"
+      ]
+    },
+    {
+      "module": "Talent",
+      "feature": "Departure Handling (F028)",
+      "severity": "LOW",
+      "spec_requirement": "When talent leaves mid-project: forfeit incomplete work, pay completed milestones",
+      "current_state": "Withdrawal status exists in builder_assignments. Full departure workflow NOT implemented.",
+      "action_needed": "Add departure workflow: mark as withdrawn, handle earnings for completed work, reassign phases",
+      "files_affected": [
+        "src/services/builders.ts",
+        "src/services/cohort-members.ts",
+        "src/services/production-learners.ts"
+      ]
+    },
+    {
+      "module": "Notifications",
+      "feature": "In-App Notification System (F030)",
+      "severity": "MEDIUM",
+      "spec_requirement": "Dashboard alerts for: pending approvals, deadlines, flags, assignments",
+      "current_state": "Notifications table and components exist. Basic notification bell implemented. NOT fully connected to triggers.",
+      "action_needed": "Add notification triggers for: assignment requests, payment due, revision flags, approvals needed",
+      "files_affected": [
+        "src/services/notifications.ts",
+        "supabase/migrations (add triggers)"
+      ]
+    },
+    {
+      "module": "Communications",
+      "feature": "Solution-Level Communications Tab",
+      "severity": "LOW",
+      "spec_requirement": "View/log communications for each solution in the solution detail page",
+      "current_state": "Communications tab shows 'Coming soon' placeholder on solution detail page",
+      "action_needed": "Wire up CommunicationList component to solution detail page communications tab",
+      "files_affected": [
+        "src/app/(dashboard)/solutions/[id]/page.tsx"
+      ]
+    },
+    {
+      "module": "Payments",
+      "feature": "Solution-Level Payments Tab",
+      "severity": "LOW",
+      "spec_requirement": "View/record payments for each solution in the solution detail page",
+      "current_state": "Payments tab shows 'Coming soon' placeholder on solution detail page",
+      "action_needed": "Build payments tab with PaymentTable filtered by solution, add Record Payment button",
+      "files_affected": [
+        "src/app/(dashboard)/solutions/[id]/page.tsx"
+      ]
+    },
+    {
+      "module": "Content",
+      "feature": "Content Queue Page",
+      "severity": "LOW",
+      "spec_requirement": "Division queue page showing available deliverables for each division",
+      "current_state": "Route exists at /content/queue but may be incomplete - needs verification",
+      "action_needed": "Verify queue page shows unclaimed deliverables by division with claim buttons",
+      "files_affected": [
+        "src/app/(dashboard)/content/queue/page.tsx"
+      ]
+    },
+    {
+      "module": "Training",
+      "feature": "Add Cohort Member Page",
+      "severity": "LOW",
+      "spec_requirement": "Form to add new cohort members with level, track, department selection",
+      "current_state": "Link to /training/cohort/new exists but route may be MISSING",
+      "action_needed": "Create cohort member creation form page",
+      "files_affected": [
+        "src/app/(dashboard)/training/cohort/new/page.tsx (VERIFY/CREATE)"
+      ]
+    },
+    {
+      "module": "Content",
+      "feature": "Add Production Learner Page",
+      "severity": "LOW",
+      "spec_requirement": "Form to add new production learners with division, skill level",
+      "current_state": "Link to /content/production/new exists but route may be MISSING",
+      "action_needed": "Create production learner creation form page",
+      "files_affected": [
+        "src/app/(dashboard)/content/production/new/page.tsx (VERIFY/CREATE)"
+      ]
+    }
+  ],
+  "summary": {
+    "critical_count": 2,
+    "high_count": 7,
+    "medium_count": 8,
+    "low_count": 7,
+    "total_gaps": 24
+  },
+  "priority_order": [
+    "1. Client Portal (CRITICAL) - External clients have no access",
+    "2. MyJKKN OAuth + Role-Based Access (CRITICAL) - Auth incomplete",
+    "3. MD Dashboard with real data (HIGH) - Current dashboard is placeholder",
+    "4. Self-service portals: Builder, Cohort, Production (HIGH) - Talent has no portal",
+    "5. MoU Management (HIGH) - Required for software deals",
+    "6. Payment auto-split calculation (HIGH) - Revenue tracking incomplete",
+    "7. Department Dashboard for HODs (HIGH) - No department view",
+    "8. Notification triggers (MEDIUM) - System doesn't alert users",
+    "9. Report exports for NIRF/NAAC (MEDIUM) - Accreditation deadline in 3 months",
+    "10. Monthly batch auto-processing (MEDIUM) - Manual process currently"
+  ],
+  "working_features": [
+    "Client CRUD with partner status and auto-discount",
+    "Solution CRUD (all 3 types)",
+    "Phase management for software solutions",
+    "Training program and session management",
+    "Content order and deliverable management",
+    "Builder management and assignment requests",
+    "Cohort member management with level progression",
+    "Production learner management",
+    "Session claiming for cohort members (with threshold check)",
+    "Deliverable claiming for production learners",
+    "Discovery visits on client detail page",
+    "Communications on client detail page",
+    "Publication CRUD with NIRF/NAAC linking",
+    "NIRF dashboard view",
+    "NAAC dashboard view",
+    "Payment recording",
+    "Earnings ledger view",
+    "Intent Platform webhook handler",
+    "Email/password login for external users",
+    "Basic notification system"
+  ]
+}

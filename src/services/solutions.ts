@@ -206,7 +206,7 @@ export async function updateSolution(id: string, input: UpdateSolutionInput): Pr
   const supabase = createClient()
 
   // If base_price is being updated, recalculate final price
-  let updatedInput = { ...input }
+  const updatedInput = { ...input }
 
   if (input.base_price !== undefined) {
     // Get the solution's client_id
