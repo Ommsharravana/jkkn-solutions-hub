@@ -82,6 +82,20 @@ All 8 stakeholder demo accounts created and browser-tested:
 - Cohort Portal: Full dashboard with Level, Sessions, Schedule
 - Production Portal: Full dashboard with Deliverables, Division (Video), Earnings
 
+### Bug Fixes (Session continued 2026-02-03)
+
+#### BUG WF-001: Client-side auth initialization race condition - FIXED (commit dd80151)
+- **Symptom:** After login redirect, page showed infinite loading with console errors "User is not authenticated"
+- **Root cause:** Auth initialization race condition - Supabase client hadn't completed token processing before components ran queries
+- **Fix:** Added proper auth loading state check in sidebar and passed `isAuthReady` prop to layout
+- **Verified:** Login flow works correctly on production
+
+#### BUG WF-002: Solutions table stuck in perpetual loading state - FIXED
+- **Symptom:** Solutions page showed loading skeletons indefinitely instead of "No solutions found" empty state
+- **Root cause:** Debug `supabase.auth.getSession()` call added to `getSolutions()` was hanging/blocking query resolution
+- **Fix:** Removed the unnecessary `getSession()` call from solutions.ts
+- **Verified:** Solutions page now correctly shows "No solutions found. Create your first solution to get started."
+
 ### Next Steps
 
 1. Enable Google OAuth in Supabase dashboard

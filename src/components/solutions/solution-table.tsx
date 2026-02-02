@@ -53,6 +53,7 @@ export function SolutionTable() {
     search: search || undefined,
   })
 
+
   if (error) {
     return (
       <div className="text-center py-10 text-destructive">
