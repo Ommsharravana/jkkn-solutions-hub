@@ -51,7 +51,7 @@ const demoUsers: DemoUser[] = [
   {
     email: 'demo.staff@jkkn.ac.in',
     password: DEMO_PASSWORD,
-    fullName: 'Demo Staff Member',
+    fullName: 'Demo Department Staff',
     role: 'department_staff',
     userType: 'internal',
     departmentCode: 'JKKN-ENG',
@@ -123,13 +123,25 @@ async function createDemoAccounts() {
 
       if (authError) {
         if (authError.message.includes('already been registered')) {
-          console.log(`  ⚠️  User already exists, updating profile...`)
+          console.log(`  ⚠️  User already exists, resetting password and updating profile...`)
 
           // Get existing user
           const { data: existingUsers } = await supabase.auth.admin.listUsers()
           const existingUser = existingUsers?.users.find(u => u.email === user.email)
 
           if (existingUser) {
+            // Reset password using admin API
+            const { error: updateError } = await supabase.auth.admin.updateUserById(
+              existingUser.id,
+              { password: user.password }
+            )
+
+            if (updateError) {
+              console.log(`  ✗ Password reset failed: ${updateError.message}`)
+            } else {
+              console.log(`  ✓ Password reset`)
+            }
+
             // Update user profile in users table
             const departmentId = user.departmentCode ? deptMap.get(user.departmentCode) : null
 
@@ -246,8 +258,8 @@ async function createDemoAccounts() {
   console.log('| Role | Email | Portal |')
   console.log('|------|-------|--------|')
   console.log('| MD/CAIO | demo.md@jkkn.ac.in | / (Admin Dashboard) |')
-  console.log('| HOD | demo.hod@jkkn.ac.in | /department |')
-  console.log('| Staff | demo.staff@jkkn.ac.in | /department |')
+  console.log('| HOD | demo.hod@jkkn.ac.in | / (Admin Dashboard) |')
+  console.log('| Dept Staff | demo.staff@jkkn.ac.in | / (Admin Dashboard) |')
   console.log('| JICATE | demo.jicate@jkkn.ac.in | / (Admin Dashboard) |')
   console.log('| Builder | demo.builder@jkkn.ac.in | /builder |')
   console.log('| Cohort | demo.cohort@jkkn.ac.in | /cohort |')
