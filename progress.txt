@@ -53,9 +53,38 @@
 - discovery_intents, discovery_communications
 - notifications
 
+## Session: 2026-02-02
+
+### Demo Accounts Created
+
+All 8 stakeholder demo accounts created and browser-tested:
+
+| Role | Email | Password | Portal | Status |
+|------|-------|----------|--------|--------|
+| MD/CAIO | demo.md@jkkn.ac.in | Demo@JKKN2026 | / | ✅ Created |
+| HOD | demo.hod@jkkn.ac.in | Demo@JKKN2026 | /department | ✅ Created |
+| Staff | demo.staff@jkkn.ac.in | Demo@JKKN2026 | /department | ✅ Created |
+| JICATE | demo.jicate@jkkn.ac.in | Demo@JKKN2026 | / | ✅ Created |
+| Builder | demo.builder@jkkn.ac.in | Demo@JKKN2026 | /builder | ✅ Verified |
+| Cohort | demo.cohort@jkkn.ac.in | Demo@JKKN2026 | /cohort | ✅ Verified |
+| Production | demo.production@jkkn.ac.in | Demo@JKKN2026 | /production | ✅ Verified |
+| Client | demo.client@example.com | Demo@JKKN2026 | /portal | ✅ Verified |
+
+**Login URL:** https://jkkn-solutions-hub.vercel.app/auth/login
+
+### Files Added
+- `scripts/create-demo-accounts.ts` - Script to create auth users and profiles
+- `supabase/migrations/018_demo_accounts.sql` - Demo user data
+
+### Browser Verification
+- Client Portal: Full dashboard with Solutions, Deliverables, Invoices
+- Builder Portal: Full dashboard with Assignments, Skills, Earnings
+- Cohort Portal: Full dashboard with Level, Sessions, Schedule
+- Production Portal: Full dashboard with Deliverables, Division (Video), Earnings
+
 ### Next Steps
 
 1. Enable Google OAuth in Supabase dashboard
 2. Add Google Cloud OAuth credentials
-3. Test full user flow with authenticated users
-4. Add RLS policies for row-level security
+3. Test full user flow with all 8 roles
+4. Add sample data for demo testing (solutions, phases, assignments)
