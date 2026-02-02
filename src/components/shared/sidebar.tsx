@@ -17,6 +17,7 @@ import {
   Video,
   BookOpen,
   MapPin,
+  UserCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -41,6 +42,7 @@ const navigation = [
 ]
 
 const bottomNavigation = [
+  { name: 'My Profile', href: '/profile', icon: UserCircle },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
