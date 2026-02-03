@@ -127,6 +127,25 @@ All 8 stakeholder demo accounts created and browser-tested:
 - Value: ₹1,50,000
 - Status: Active
 
+#### BUG WF-004: MD role cannot UPDATE solutions (RLS role mismatch) - FIXED (commit 5517eae)
+- **Symptom:** MD user could see solutions but couldn't update them (0 rows affected)
+- **Root cause:** `is_admin()` function in RLS checked for `role = 'admin'` but actual MD role is `'md_caio'`
+- **Fix:** Updated `is_admin()` to check for `'md_caio'` and `'jicate_staff'`, and `is_hod()` to check for `'department_head'`
+- **Test:** Added integration test `src/services/__tests__/solutions-visibility.test.ts`
+- **Migration:** `019_fix_admin_role_check.sql`
+- **Verified:** MD can now update solutions created by other users
+
+### Multi-Role Workflow Test (Swarm) - 2026-02-03
+
+| Agent | Role | Task | Result |
+|-------|------|------|--------|
+| discoverer | - | Map workflow and roles | ✅ Found 8 roles, 3 solution types |
+| hod-agent | HOD | Create high-value solution | ✅ JKKN-SOL-2026-002 (₹5L) |
+| md-agent | MD | Review solution visibility | ✅ Logged in, verified |
+| coordinator | - | Orchestrate and report | ✅ Complete |
+
+**Key Finding:** Discovered RLS role mismatch bug (WF-004) during workflow testing.
+
 ### Next Steps
 
 1. Enable Google OAuth in Supabase dashboard
