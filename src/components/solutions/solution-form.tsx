@@ -30,25 +30,14 @@ import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
 import { SolutionTypeSelector } from './solution-type-selector'
 import { useCreateSolution } from '@/hooks/use-solutions'
+import { useClients } from '@/hooks/use-clients'
+import { useDepartments } from '@/hooks/use-departments'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Check, Loader2 } from 'lucide-react'
 import type { SolutionType } from '@/types/database'
-
-// Mock data - in production, fetch from API
-const mockClients = [
-  { id: 'client-1', name: 'ABC Industries', partner_status: 'standard' },
-  { id: 'client-2', name: 'XYZ Corp (Yi Partner)', partner_status: 'yi' },
-  { id: 'client-3', name: 'Alumni Ventures', partner_status: 'alumni' },
-]
-
-const mockDepartments = [
-  { id: 'dept-1', name: 'Computer Science' },
-  { id: 'dept-2', name: 'Business Studies' },
-  { id: 'dept-3', name: 'Engineering' },
-]
 
 const formSchema = z.object({
   solution_type: z.enum(['software', 'training', 'content']),
@@ -84,6 +73,8 @@ export function SolutionForm({
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const createSolution = useCreateSolution()
+  const { data: clients = [], isLoading: clientsLoading } = useClients()
+  const { data: departments = [], isLoading: departmentsLoading } = useDepartments()
   const [currentStep, setCurrentStep] = useState(1)
 
   const form = useForm<FormValues>({
@@ -118,7 +109,7 @@ export function SolutionForm({
 
   const solutionType = form.watch('solution_type')
   const clientId = form.watch('client_id')
-  const selectedClient = mockClients.find((c) => c.id === clientId)
+  const selectedClient = clients.find((c) => c.id === clientId)
 
   const canProceed = () => {
     switch (currentStep) {
@@ -280,7 +271,7 @@ export function SolutionForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {mockClients.map((client) => (
+                          {clients.map((client) => (
                             <SelectItem key={client.id} value={client.id}>
                               <div className="flex items-center gap-2">
                                 {client.name}
@@ -317,7 +308,7 @@ export function SolutionForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {mockDepartments.map((dept) => (
+                          {departments.map((dept) => (
                             <SelectItem key={dept.id} value={dept.id}>
                               {dept.name}
                             </SelectItem>
@@ -558,7 +549,7 @@ export function SolutionForm({
                   <div className="py-3 grid grid-cols-3">
                     <dt className="text-sm font-medium text-muted-foreground">Department</dt>
                     <dd className="text-sm col-span-2">
-                      {mockDepartments.find((d) => d.id === form.watch('lead_department_id'))?.name}
+                      {departments.find((d) => d.id === form.watch('lead_department_id'))?.name}
                     </dd>
                   </div>
                   <div className="py-3 grid grid-cols-3">
