@@ -96,6 +96,37 @@ All 8 stakeholder demo accounts created and browser-tested:
 - **Fix:** Removed the unnecessary `getSession()` call from solutions.ts
 - **Verified:** Solutions page now correctly shows "No solutions found. Create your first solution to get started."
 
+#### BUG WF-003: Solution creation failing with invalid foreign keys - FIXED (commit b6e3e9d)
+- **Symptom:** "Create Solution" button showed toast "Failed to create solution"
+- **Root cause:** SolutionForm used mock data with fake IDs (`client-1`, `dept-1`) that don't exist in database
+- **Fix:** Replaced mock data with `useClients()` and `useDepartments()` hooks to fetch real data
+- **Verified:** Solution creation workflow works end-to-end
+
+### Workflow Test Results (2026-02-03)
+
+**Solution Creation Workflow: ✅ PASSED**
+
+| Step | Result |
+|------|--------|
+| Login as HOD | ✅ Success |
+| Navigate to Solutions | ✅ Empty state shown |
+| Click New Solution | ✅ Discovery mode selector |
+| Skip Discovery | ✅ Form wizard loads |
+| Select Software type | ✅ |
+| Select Client | ✅ Real clients from DB (Demo Industries) |
+| Select Department | ✅ Real departments from DB (JKKN CET) |
+| Fill Solution Details | ✅ Title, Problem, Price |
+| Submit Create Solution | ✅ "Solution created successfully" |
+| Solution appears in list | ✅ JKKN-SOL-2026-001 |
+
+**First Solution Created:**
+- Code: JKKN-SOL-2026-001
+- Title: Student Exam Portal v2
+- Client: Demo Industries Pvt Ltd
+- Department: JKKN College of Engineering & Technology
+- Value: ₹1,50,000
+- Status: Active
+
 ### Next Steps
 
 1. Enable Google OAuth in Supabase dashboard
